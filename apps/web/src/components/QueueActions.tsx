@@ -23,7 +23,8 @@ export function QueueActions({
     <div className="fp-desk-actions">
       <button
         type="button"
-        className="fp-desk-button"
+        className="fp-btn fp-desk-button"
+        data-variant="success"
         onClick={onCallNext}
         disabled={busy || !canCallNext}
       >
@@ -31,7 +32,8 @@ export function QueueActions({
       </button>
       <button
         type="button"
-        className="fp-desk-button"
+        className="fp-btn fp-desk-button"
+        data-variant="success"
         onClick={onStart}
         disabled={busy || !canStart}
       >
@@ -39,7 +41,8 @@ export function QueueActions({
       </button>
       <button
         type="button"
-        className="fp-desk-button"
+        className="fp-btn fp-desk-button"
+        data-variant="success"
         onClick={onComplete}
         disabled={busy || !canComplete}
       >
@@ -47,7 +50,8 @@ export function QueueActions({
       </button>
       <button
         type="button"
-        className="fp-desk-button fp-desk-button-danger"
+        className="fp-btn fp-desk-button"
+        data-variant="danger"
         onClick={onSkip}
         disabled={busy || !canSkip}
       >

@@ -1,4 +1,11 @@
-export type IconName = "people" | "clock" | "counter" | "bell" | "refresh" | "check";
+export type IconName =
+  | "people"
+  | "clock"
+  | "counter"
+  | "bell"
+  | "refresh"
+  | "check"
+  | "search";
 
 /** Line + Rounded icon style, 2px stroke, matching the design system. */
 const PATH: Record<IconName, string> = {
@@ -8,6 +15,7 @@ const PATH: Record<IconName, string> = {
   bell: "M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9zM13.7 21a2 2 0 01-3.4 0",
   refresh: "M21 12a9 9 0 11-3-6.7M21 3v6h-6",
   check: "M5 13l4 4L19 7",
+  search: "M11 19a8 8 0 100-16 8 8 0 000 16zM21 21l-4.35-4.35",
 };
 
 export function Icon({ name, size = 18, className }: { name: IconName; size?: number; className?: string }) {

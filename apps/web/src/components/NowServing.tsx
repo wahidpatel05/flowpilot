@@ -27,7 +27,10 @@ export function NowServing({
     return (
       <div className="fp-card fp-desk-now-serving">
         <span className="fp-metric-label">Now Serving</span>
-        <span className="fp-desk-token-number">{servingToken.tokenNumber}</span>
+        {/* Keyed on the Token so the flip replays each time the number changes. */}
+        <span className="fp-desk-token-number" key={servingToken.tokenNumber}>
+          {servingToken.tokenNumber}
+        </span>
         <span className="fp-metric-value" data-emphasis="wait">
           {formatElapsedMinutes(servingToken.startedAtMillis, now)}
           <span className="fp-metric-unit">elapsed</span>
@@ -40,7 +43,9 @@ export function NowServing({
     return (
       <div className="fp-card fp-desk-now-serving">
         <span className="fp-metric-label">Called — waiting to start</span>
-        <span className="fp-desk-token-number">{calledToken.tokenNumber}</span>
+        <span className="fp-desk-token-number" key={calledToken.tokenNumber}>
+          {calledToken.tokenNumber}
+        </span>
       </div>
     );
   }

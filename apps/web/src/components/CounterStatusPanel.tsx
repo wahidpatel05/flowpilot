@@ -29,7 +29,8 @@ export function CounterStatusPanel({
       </div>
       <button
         type="button"
-        className="fp-desk-button fp-desk-button-secondary"
+        className="fp-btn fp-desk-button"
+        data-variant={isActive ? "primary" : "purple"}
         onClick={onToggle}
         disabled={busy}
       >

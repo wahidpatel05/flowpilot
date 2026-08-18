@@ -8,12 +8,15 @@
  * value can't read `busy` now and `critical` in the forecast.
  */
 import {
+  calculateEta,
   findProjectedService,
   findQueueSnapshot,
   simulateFacility,
   type FacilityProjection,
+  type ProjectedService,
   type QueueHealth,
   type ServiceFlowEdgeRow,
+  type TokenStatus,
 } from "./core";
 
 /** How far ahead the Digital Twin forecasts, in minutes. */
@@ -23,6 +26,43 @@ export interface ControlServiceState {
   queueLength: number;
   waitMinutes: number;
   health: QueueHealth;
+}
+
+/**
+ * One Visitor still in line at a Service, with their own predicted wait — what
+ * a Manager drilling into a queue number is actually looking for. The wait
+ * comes from `calculateEta` for this Visitor's position, so a drill-in can
+ * never disagree with the phone in their hand.
+ */
+export interface ControlQueueEntry {
+  tokenId: string;
+  tokenNumber: string;
+  status: TokenStatus;
+  /** Injected by Simulate Rush, and must stay visibly labelled. */
+  isSimulated: boolean;
+  /** 0-based place in line. */
+  position: number;
+  waitMinutes: number;
+}
+
+/**
+ * The figures behind a Service's headline numbers, for drilling in. Everything
+ * here is read off the projection — the drill-in derives nothing of its own.
+ */
+export interface ControlServiceDetail {
+  /** `waiting` + `called`, in call order. */
+  queue: ControlQueueEntry[];
+  /** The part of `queueLength` from real Visitors. */
+  realQueueLength: number;
+  averageServiceMinutes: number;
+  defaultServiceMinutes: number;
+  /** How many completed durations fed the average. Zero means cold start. */
+  completedDurationSampleCount: number;
+  arrivalRatePerMinute: number;
+  /** One hop of the Flow Graph: demand heading here from upstream. */
+  downstreamArrivalRatePerMinute: number;
+  healthyThresholdMinutes: number;
+  criticalThresholdMinutes: number;
 }
 
 export interface ControlServiceNode {
@@ -39,6 +79,7 @@ export interface ControlServiceNode {
   isColdStart: boolean;
   /** Column in the Flow Graph: 0 for entry Services, then one per hop. */
   layer: number;
+  detail: ControlServiceDetail;
 }
 
 export interface ControlFlowEdge {
@@ -153,6 +194,36 @@ function pickCritical(
   return worst?.serviceId ?? null;
 }
 
+/**
+ * The drill-in figures for one Service. Each waiting Visitor's own wait comes
+ * from `calculateEta` at their position — the engine, called once per Visitor,
+ * never a second ETA implementation of our own (INTEGRATION.md rule 1).
+ */
+function buildServiceDetail(detail: ProjectedService): ControlServiceDetail {
+  return {
+    queue: detail.queue.map((entry) => ({
+      tokenId: entry.tokenId,
+      tokenNumber: entry.tokenNumber,
+      status: entry.status,
+      isSimulated: entry.isSimulated,
+      position: entry.position,
+      waitMinutes: calculateEta({
+        customersAhead: entry.position,
+        averageServiceMinutes: detail.averageServiceMinutes,
+        activeCounters: detail.activeCounters,
+      }),
+    })),
+    realQueueLength: detail.realQueueLength,
+    averageServiceMinutes: detail.averageServiceMinutes,
+    defaultServiceMinutes: detail.defaultServiceMinutes,
+    completedDurationSampleCount: detail.completedDurationSampleCount,
+    arrivalRatePerMinute: detail.arrivalRatePerMinute,
+    downstreamArrivalRatePerMinute: detail.downstreamArrivalRatePerMinute,
+    healthyThresholdMinutes: detail.healthyThresholdMinutes,
+    criticalThresholdMinutes: detail.criticalThresholdMinutes,
+  };
+}
+
 export function buildControlViewModel(
   input: BuildControlViewModelInput,
 ): ControlViewModel {
@@ -229,6 +300,7 @@ export function buildControlViewModel(
       },
       isColdStart: detail.isColdStart,
       layer: layers.get(detail.serviceId) ?? 0,
+      detail: buildServiceDetail(detail),
     });
   }
 

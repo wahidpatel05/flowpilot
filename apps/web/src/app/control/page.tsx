@@ -8,7 +8,12 @@ import { useRecommendation } from "../../hooks/useRecommendation";
 import { useToasts } from "../../hooks/useToasts";
 import { useEtaImprovement } from "../../hooks/useEtaImprovement";
 import { useWaitHistory } from "../../hooks/useWaitHistory";
-import { buildControlViewModel, pickFeaturedService } from "../../lib/controlViewModel";
+import { useInterventions } from "../../hooks/useInterventions";
+import {
+  buildControlViewModel,
+  findControlNode,
+  pickFeaturedService,
+} from "../../lib/controlViewModel";
 import { deriveAvatarMood } from "../../lib/avatarMood";
 import { formatWaitMinutes } from "../../lib/formatMinutes";
 import { ConnectionBadge } from "../../components/ConnectionBadge";
@@ -23,6 +28,10 @@ import { EtaImprovementBadge } from "../../components/EtaImprovementBadge";
 import { LiveQueuePanel } from "../../components/LiveQueuePanel";
 import { ServiceStatusGrid } from "../../components/ServiceStatusGrid";
 import { RefreshButton } from "../../components/RefreshButton";
+import { InterventionApplyCard } from "../../components/InterventionApplyCard";
+import { InterventionTimeline } from "../../components/InterventionTimeline";
+import { TimeReturnedCard } from "../../components/TimeReturnedCard";
+import { ServiceQueueDetail } from "../../components/ServiceQueueDetail";
 
 export default function ControlPage() {
   const {
@@ -39,6 +48,10 @@ export default function ControlPage() {
   const demo = useDemoControls(refresh);
   const toasts = useToasts();
   const recommendation = useRecommendation(projection, toasts);
+  // `refresh` pulls the Digital Twin forward the instant capacity changes,
+  // rather than waiting on the counter_assignments Realtime round trip.
+  const interventions = useInterventions(toasts, refresh);
+  const [drilledServiceId, setDrilledServiceId] = useState<string | null>(null);
 
   const viewModel = useMemo(
     () =>
@@ -70,10 +83,11 @@ export default function ControlPage() {
   }, [etaImprovement]);
 
   const avatarMood = deriveAvatarMood({
-    actionError: recommendation.actionError,
+    actionError: recommendation.actionError ?? interventions.applyError,
     generating: recommendation.generating,
     hasActiveRecommendation: recommendation.active !== null,
     justApproved: recommendation.justApproved,
+    justApplied: interventions.justApplied,
     criticalNow: viewModel !== null && viewModel.criticalNow !== null,
   });
 
@@ -86,6 +100,8 @@ export default function ControlPage() {
   }
 
   const featuredService = viewModel === null ? undefined : pickFeaturedService(viewModel);
+  const drilledService =
+    viewModel === null ? undefined : findControlNode(viewModel, drilledServiceId);
   const totalCounters = Object.keys(counterNames).length;
   const activeCounters =
     viewModel === null
@@ -129,6 +145,12 @@ export default function ControlPage() {
               activeCounters={activeCounters}
             />
 
+            <TimeReturnedCard
+              minutes={interventions.ledger.cumulativeMinutesReturned}
+              realisedCount={interventions.ledger.realisedCount}
+              pulse={interventions.justApplied}
+            />
+
             {etaImprovement !== null ? <EtaImprovementBadge improvement={etaImprovement} /> : null}
 
             <LiveQueuePanel
@@ -139,6 +161,7 @@ export default function ControlPage() {
               totalCounters={totalCounters}
               healthBreakdown={viewModel.healthBreakdown}
               waitHistory={waitHistory}
+              onDrillIn={setDrilledServiceId}
             />
 
             <div className="fp-control-body">
@@ -208,10 +231,34 @@ export default function ControlPage() {
                   onApprove={recommendation.approve}
                   onReject={recommendation.reject}
                 />
+                <InterventionApplyCard
+                  intervention={interventions.ledger.awaitingApply}
+                  staffNames={staffNames}
+                  counterNames={counterNames}
+                  serviceNames={serviceNames}
+                  applying={interventions.applying}
+                  applyError={interventions.applyError}
+                  justApplied={interventions.justApplied}
+                  onApply={interventions.apply}
+                />
               </aside>
             </div>
 
-            <ServiceStatusGrid services={viewModel.services} />
+            <InterventionTimeline
+              entries={interventions.timeline}
+              error={interventions.readError}
+            />
+
+            <ServiceStatusGrid services={viewModel.services} onDrillIn={setDrilledServiceId} />
+
+            {drilledService !== undefined ? (
+              <ServiceQueueDetail
+                service={drilledService}
+                nowServingTokenNumber={nowServing[drilledService.serviceId] ?? null}
+                horizonMinutes={viewModel.horizonMinutes}
+                onClose={() => setDrilledServiceId(null)}
+              />
+            ) : null}
           </>
         )}
       </div>

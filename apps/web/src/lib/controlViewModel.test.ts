@@ -318,6 +318,71 @@ describe("buildControlViewModel — Flow Graph", () => {
   });
 });
 
+describe("buildControlViewModel — per-Service queue detail", () => {
+  it("carries the queue in call order with each Visitor's own wait", () => {
+    const exam = findControlNode(build(), EXAM)!;
+    // 6 waiting, 1 Counter, 6 min each: position 0 waits 0, position 5 waits 30.
+    expect(exam.detail.queue).toHaveLength(6);
+    expect(exam.detail.queue.map((entry) => entry.position)).toEqual([0, 1, 2, 3, 4, 5]);
+    expect(exam.detail.queue[0]!.waitMinutes).toBeCloseTo(0, 5);
+    expect(exam.detail.queue[5]!.waitMinutes).toBeCloseTo(30, 0);
+  });
+
+  it("agrees with the Service's headline wait at the back of the line", () => {
+    // The headline is the wait a Visitor joining now would face, which is one
+    // service time beyond the last person already in line.
+    const exam = findControlNode(build(), EXAM)!;
+    const last = exam.detail.queue.at(-1)!;
+    expect(exam.now.waitMinutes - last.waitMinutes).toBeCloseTo(
+      exam.detail.averageServiceMinutes,
+      5,
+    );
+  });
+
+  it("labels a Simulate Rush Token so a drill-in can never hide it", () => {
+    const vm = build({
+      tokens: [...waiting(EXAM, 2), ...waiting(EXAM, 3, true)],
+    });
+    const exam = findControlNode(vm, EXAM)!;
+    expect(exam.detail.queue.filter((entry) => entry.isSimulated)).toHaveLength(3);
+    expect(exam.detail.realQueueLength).toBe(2);
+    expect(exam.now.simulatedQueueLength).toBe(3);
+  });
+
+  it("reports an unbounded wait per Visitor when no Counter is open", () => {
+    const exam = findControlNode(
+      build({ counterAssignments: assignments.filter((a) => a.service_id !== EXAM) }),
+      EXAM,
+    )!;
+    expect(exam.now.activeCounters).toBe(0);
+    expect(exam.detail.queue.every((entry) => entry.waitMinutes === Number.POSITIVE_INFINITY)).toBe(
+      true,
+    );
+  });
+
+  it("carries the thresholds the Health band was decided against", () => {
+    const exam = findControlNode(build(), EXAM)!;
+    expect(exam.detail.healthyThresholdMinutes).toBe(15);
+    expect(exam.detail.criticalThresholdMinutes).toBe(30);
+  });
+
+  it("carries the service-time provenance, so a cold start is visible", () => {
+    const exam = findControlNode(build(), EXAM)!;
+    expect(exam.isColdStart).toBe(true);
+    expect(exam.detail.completedDurationSampleCount).toBe(0);
+    expect(exam.detail.averageServiceMinutes).toBe(6);
+    expect(exam.detail.defaultServiceMinutes).toBe(6);
+  });
+
+  it("holds an empty queue for a Service with nobody in line", () => {
+    const vm = build({ tokens: [] });
+    for (const node of vm.services) {
+      expect(node.detail.queue).toEqual([]);
+      expect(node.detail.realQueueLength).toBe(0);
+    }
+  });
+});
+
 describe("findControlNode", () => {
   it("returns undefined for a null id, so a missing callout is safe", () => {
     expect(findControlNode(build(), null)).toBeUndefined();

@@ -14,6 +14,7 @@ import {
   type FacilityProjection,
   type ServiceFlowEdgeRow,
 } from "../lib/core";
+import type { NameLookup } from "../lib/names";
 
 /**
  * Tables whose changes can move a number rendered on this page. `counters`
@@ -30,8 +31,12 @@ const WATCHED_TABLES = ["tokens", "counter_assignments"] as const;
  */
 const POLL_INTERVAL_MS = 5_000;
 
-/** id -> display name, for surfaces that must never render a raw identifier. */
-export type NameLookup = Readonly<Record<string, string>>;
+/**
+ * id -> display name, for surfaces that must never render a raw identifier.
+ * Defined in `lib/names.ts` so pure modules can describe a move without
+ * importing a hook, and re-exported here because this is where it is built.
+ */
+export type { NameLookup } from "../lib/names";
 
 function buildNameLookup(
   rows: readonly { id: string; name?: string | null }[] | undefined,

@@ -7,6 +7,7 @@ function input(overrides: Partial<AvatarMoodInput> = {}): AvatarMoodInput {
     generating: false,
     hasActiveRecommendation: false,
     justApproved: false,
+    justApplied: false,
     criticalNow: false,
     ...overrides,
   };
@@ -41,12 +42,19 @@ describe("deriveAvatarMood", () => {
     ).toBe("excited");
   });
 
+  it("is excited right after an apply — the moment capacity actually changed", () => {
+    expect(
+      deriveAvatarMood(input({ justApplied: true, generating: true, criticalNow: true })),
+    ).toBe("excited");
+  });
+
   it("is confused on an action error, outranking every other state", () => {
     expect(
       deriveAvatarMood(
         input({
           actionError: "boom",
           justApproved: true,
+          justApplied: true,
           generating: true,
           hasActiveRecommendation: true,
           criticalNow: true,

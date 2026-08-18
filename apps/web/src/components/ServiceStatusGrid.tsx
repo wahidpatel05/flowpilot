@@ -22,8 +22,17 @@ const FILTERS: { id: Filter; label: string }[] = [
  * filterable by its current Health band. Which filter is selected is pure UI
  * state (like the Now/Forecast toggle); every number on the card still comes
  * from the view model.
+ *
+ * Each card is a button, because every figure on it is an aggregate and a
+ * Manager challenged on one has to be able to drill into it.
  */
-export function ServiceStatusGrid({ services }: { services: readonly ControlServiceNode[] }) {
+export function ServiceStatusGrid({
+  services,
+  onDrillIn,
+}: {
+  services: readonly ControlServiceNode[];
+  onDrillIn: (serviceId: string) => void;
+}) {
   const [filter, setFilter] = useState<Filter>("all");
   const visible = filter === "all" ? services : services.filter((s) => s.now.health === filter);
 
@@ -43,7 +52,14 @@ export function ServiceStatusGrid({ services }: { services: readonly ControlServ
       ) : (
         <div className="fp-service-grid">
           {visible.map((service) => (
-            <article key={service.serviceId} className="fp-service-card" data-health={service.now.health}>
+            <button
+              key={service.serviceId}
+              type="button"
+              className="fp-service-card"
+              data-health={service.now.health}
+              onClick={() => onDrillIn(service.serviceId)}
+              aria-label={`Queue detail for ${service.name}`}
+            >
               <span className="fp-service-card-icon" aria-hidden="true">
                 <Icon name="people" />
               </span>
@@ -54,7 +70,7 @@ export function ServiceStatusGrid({ services }: { services: readonly ControlServ
                 </p>
               </div>
               <StatusPill health={service.now.health} />
-            </article>
+            </button>
           ))}
         </div>
       )}

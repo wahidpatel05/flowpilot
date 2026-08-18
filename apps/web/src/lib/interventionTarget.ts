@@ -1,6 +1,11 @@
 import type { ActionType, InterventionStatus } from "./core";
 
-/** Structural mirror of `public.interventions` — the columns the Desk reads. */
+/**
+ * Structural mirror of `public.interventions`. The lifecycle timestamps are
+ * optional because the Desk selects a narrower set of columns than Control
+ * does — the Desk only needs to know an Assignment is incoming, while Control
+ * renders when each hop actually happened.
+ */
 export interface InterventionRow {
   id: string;
   status: InterventionStatus;
@@ -8,6 +13,9 @@ export interface InterventionRow {
   action_payload: Record<string, unknown>;
   estimated_minutes_returned: number | null;
   created_at: string;
+  approved_at?: string | null;
+  accepted_at?: string | null;
+  applied_at?: string | null;
 }
 
 /**

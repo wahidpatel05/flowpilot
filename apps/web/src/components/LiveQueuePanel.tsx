@@ -18,12 +18,14 @@ export function LiveQueuePanel({
   totalCounters,
   healthBreakdown,
   waitHistory,
+  onDrillIn,
 }: {
   featured: ControlServiceNode | undefined;
   nowServingTokenNumber: string | null;
   totalCounters: number;
   healthBreakdown: HealthBreakdown;
   waitHistory: readonly number[];
+  onDrillIn: (serviceId: string) => void;
 }) {
   return (
     <section className="fp-panel fp-live-queue" aria-label="Live queue visualization">
@@ -44,6 +46,13 @@ export function LiveQueuePanel({
                 <StatusPill health={featured.now.health} />
               </div>
               <QueueLine queueLength={featured.now.queueLength} />
+              <button
+                type="button"
+                className="fp-drill-in"
+                onClick={() => onDrillIn(featured.serviceId)}
+              >
+                Open queue detail
+              </button>
               <CounterBoard
                 nowServingTokenNumber={nowServingTokenNumber}
                 activeCounters={featured.now.activeCounters}

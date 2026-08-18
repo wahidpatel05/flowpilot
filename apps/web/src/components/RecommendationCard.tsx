@@ -4,38 +4,10 @@ import { useState } from "react";
 import { ESTIMATED_TIME_RETURNED_LABEL, formatMinutesReturned } from "../lib/core";
 import { formatWaitMinutes } from "../lib/formatMinutes";
 import { recommendationParties, type RecommendationRow } from "../lib/recommendationRow";
+import { describeMove } from "../lib/describeAction";
 import type { RecommendationAction } from "../hooks/useRecommendation";
-import type { NameLookup } from "../hooks/useLiveFacility";
+import type { NameLookup } from "../lib/names";
 import { Modal } from "./Modal";
-
-function name(lookup: NameLookup, id: string | undefined): string {
-  if (id === undefined) return "an unnamed party";
-  return lookup[id] ?? id;
-}
-
-/**
- * A sentence naming the actual Staff member, Counter and Services — never a
- * raw identifier — mirroring the wording `fp_action_label` writes into the
- * timeline, so the card and the audit trail never disagree on how to describe
- * the same move.
- */
-function describeMove(
-  row: RecommendationRow,
-  staffNames: NameLookup,
-  counterNames: NameLookup,
-  serviceNames: NameLookup,
-): string {
-  const parties = recommendationParties(row);
-  const staffName = name(staffNames, parties.staffId);
-  const counterName = name(counterNames, parties.counterId);
-  const toServiceName = name(serviceNames, parties.toServiceId);
-
-  if (row.action_type === "activate_counter") {
-    return `Open ${counterName} with ${staffName} for ${toServiceName}.`;
-  }
-  const fromServiceName = name(serviceNames, parties.fromServiceId);
-  return `Move ${staffName} from ${fromServiceName} to ${toServiceName}, at ${counterName}.`;
-}
 
 export function RecommendationCard({
   recommendation,
@@ -103,7 +75,7 @@ export function RecommendationCard({
       </div>
 
       <p className="fp-rec-move">
-        {describeMove(recommendation, staffNames, counterNames, serviceNames)}
+        {describeMove(recommendation, { staffNames, counterNames, serviceNames })}
       </p>
       <p className="fp-rec-duration">For the next {durationMinutes} minutes.</p>
 

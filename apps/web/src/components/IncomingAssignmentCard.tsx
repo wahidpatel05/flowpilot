@@ -27,7 +27,8 @@ export function IncomingAssignmentCard({
       </p>
       <button
         type="button"
-        className="fp-desk-button fp-desk-button-accent"
+        className="fp-btn fp-desk-button"
+        data-variant="primary"
         onClick={onAccept}
         disabled={busy}
       >

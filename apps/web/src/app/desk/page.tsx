@@ -169,67 +169,78 @@ export default function DeskPage() {
   const combinedError = facilityError ?? catalogError ?? activeTokensError ?? incomingError;
 
   return (
-    <main className="fp-page">
-      <div className="fp-header">
-        <div>
-          <h1 className="fp-title">FlowPilot Desk</h1>
-          <p className="fp-subtitle">Serve Visitors, one Counter at a time.</p>
+    <div className="fp-canvas">
+      <main className="fp-page fp-sheet">
+        <div className="fp-header">
+          <div>
+            <h1 className="fp-title">
+              Serve the
+              <br />
+              next Visitor.
+            </h1>
+            <p className="fp-subtitle">One Counter at a time.</p>
+          </div>
+          <ConnectionBadge connection={connection} />
         </div>
-        <ConnectionBadge connection={connection} />
-      </div>
 
-      {combinedError !== null ? <div className="fp-error">{combinedError}</div> : null}
+        {combinedError !== null ? <div className="fp-error">{combinedError}</div> : null}
 
-      <CounterPicker
-        counters={counters}
-        selectedCounterId={selectedCounterId}
-        onSelect={handleSelectCounter}
-      />
+        <CounterPicker
+          counters={counters}
+          selectedCounterId={selectedCounterId}
+          onSelect={handleSelectCounter}
+        />
 
-      {selectedCounterId === null ? (
-        <p className="fp-empty">Choose a Counter to begin.</p>
-      ) : (
-        <div className="fp-desk-layout">
-          <CounterStatusPanel
-            counterName={selectedCounter?.name ?? "Counter"}
-            status={selectedCounterState?.status ?? "inactive"}
-            serviceName={assignedService?.serviceName ?? null}
-            busy={busy}
-            onToggle={handleToggleCounter}
-          />
+        <ActionFeedback feedback={feedback} />
 
-          {incomingAssignment !== null ? (
-            <IncomingAssignmentCard
-              assignment={incomingAssignment}
-              destinationServiceName={destinationServiceName}
-              busy={busy}
-              onAccept={handleAcceptAssignment}
-            />
-          ) : null}
+        {selectedCounterId === null ? (
+          <p className="fp-empty">Choose a Counter to begin.</p>
+        ) : (
+          <div className="fp-desk-layout">
+            <div className="fp-desk-main">
+              {assignedServiceId === null ? (
+                <p className="fp-empty">This Counter has no Service assigned right now.</p>
+              ) : (
+                <>
+                  <NowServing servingToken={servingToken} calledToken={calledToken} />
+                  <QueueActions
+                    canCallNext={canCallNext}
+                    canStart={canStart}
+                    canComplete={canComplete}
+                    canSkip={canSkip}
+                    busy={busy}
+                    onCallNext={handleCallNext}
+                    onStart={handleStart}
+                    onComplete={handleComplete}
+                    onSkip={handleSkip}
+                  />
+                </>
+              )}
+            </div>
 
-          <ActionFeedback feedback={feedback} />
-
-          {assignedServiceId === null ? (
-            <p className="fp-empty">This Counter has no Service assigned right now.</p>
-          ) : (
-            <>
-              <NowServing servingToken={servingToken} calledToken={calledToken} />
-              <UpNextList waiting={waitingPreview} />
-              <QueueActions
-                canCallNext={canCallNext}
-                canStart={canStart}
-                canComplete={canComplete}
-                canSkip={canSkip}
+            <aside className="fp-desk-aside">
+              <CounterStatusPanel
+                counterName={selectedCounter?.name ?? "Counter"}
+                status={selectedCounterState?.status ?? "inactive"}
+                serviceName={assignedService?.serviceName ?? null}
                 busy={busy}
-                onCallNext={handleCallNext}
-                onStart={handleStart}
-                onComplete={handleComplete}
-                onSkip={handleSkip}
+                onToggle={handleToggleCounter}
               />
-            </>
-          )}
-        </div>
-      )}
-    </main>
+
+              {incomingAssignment !== null ? (
+                <IncomingAssignmentCard
+                  assignment={incomingAssignment}
+                  destinationServiceName={destinationServiceName}
+                  busy={busy}
+                  onAccept={handleAcceptAssignment}
+                />
+              ) : null}
+
+              {assignedServiceId !== null ? <UpNextList waiting={waitingPreview} /> : null}
+            </aside>
+          </div>
+        )}
+      </main>
+    </div>
   );
 }

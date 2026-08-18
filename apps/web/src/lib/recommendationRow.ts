@@ -29,6 +29,24 @@ function readNumber(payload: Record<string, unknown>, key: string): number | und
   return typeof value === "number" && Number.isFinite(value) ? value : undefined;
 }
 
+/**
+ * The part of a row that describes a move. Both `recommendations` and
+ * `interventions` carry it — an Intervention is an approved Recommendation
+ * moving through the world (CONTEXT.md), and it is copied across verbatim by
+ * `approve_recommendation()` — so one reader serves both tables and Control's
+ * Recommendation card and Apply card can never word the same move differently.
+ */
+export interface ActionShape {
+  action_type: ActionType;
+  action_payload: Record<string, unknown>;
+  /**
+   * The Service the row is filed against, used only as the destination when
+   * the payload itself omits one. `interventions` has no such column, so this
+   * is optional.
+   */
+  service_id?: string;
+}
+
 export interface RecommendationParties {
   staffId: string | undefined;
   counterId: string | undefined;
@@ -47,7 +65,7 @@ const DEFAULT_DURATION_MINUTES = 30;
  * / `ReassignStaffPayload` in flowpilot-core/src/types.ts. Never reads a third
  * action type: `reassign_counter` does not exist (ADR-0001).
  */
-export function recommendationParties(row: RecommendationRow): RecommendationParties {
+export function recommendationParties(row: ActionShape): RecommendationParties {
   const payload = row.action_payload;
   const durationMinutes = readNumber(payload, "durationMinutes") ?? DEFAULT_DURATION_MINUTES;
 
