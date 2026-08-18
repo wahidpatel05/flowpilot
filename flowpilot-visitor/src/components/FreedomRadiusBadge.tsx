@@ -7,14 +7,14 @@
  */
 import { StyleSheet, Text, View } from "react-native";
 import { FREEDOM_RADIUS_LABEL, type FreedomRadiusState } from "../token/freedomRadius";
-import { colors, radius, spacing } from "../theme";
+import { colors, neo, radius, spacing } from "../theme";
 
 interface FreedomRadiusBadgeProps {
   state: FreedomRadiusState;
 }
 
-const BADGE_STYLE: Record<FreedomRadiusState, { background: string; text: string; border?: string }> = {
-  "free-to-leave": { background: colors.card, text: colors.muted, border: colors.border },
+const BADGE_STYLE: Record<FreedomRadiusState, { background: string; text: string }> = {
+  "free-to-leave": { background: colors.card, text: colors.muted },
   "stay-nearby": { background: colors.primary, text: colors.text },
   "turn-approaching": { background: colors.red, text: colors.card },
 };
@@ -23,13 +23,7 @@ export function FreedomRadiusBadge({ state }: FreedomRadiusBadgeProps) {
   const tone = BADGE_STYLE[state];
 
   return (
-    <View
-      style={[
-        styles.badge,
-        { backgroundColor: tone.background },
-        tone.border !== undefined && { borderWidth: 1, borderColor: tone.border },
-      ]}
-    >
+    <View style={[styles.badge, { backgroundColor: tone.background }]}>
       <Text style={[styles.text, { color: tone.text }]}>{FREEDOM_RADIUS_LABEL[state]}</Text>
     </View>
   );
@@ -37,6 +31,8 @@ export function FreedomRadiusBadge({ state }: FreedomRadiusBadgeProps) {
 
 const styles = StyleSheet.create({
   badge: {
+    borderWidth: neo.borderWidth,
+    borderColor: colors.border,
     borderRadius: radius.md,
     paddingVertical: spacing.xs + 2,
     paddingHorizontal: spacing.md,

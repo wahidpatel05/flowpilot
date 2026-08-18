@@ -5,19 +5,23 @@
  * deliberately NOT Control's dark command-centre palette: Control is read
  * across a room under pressure, this is read in someone's hand while they
  * decide whether they can go and sit down.
+ *
+ * Neo-brutalist surface language: every card, button and pill carries a solid
+ * black outline plus a hard (unblurred) offset shadow — see NeoBox — rather
+ * than a soft drop shadow. `border` is therefore black, not a light hairline.
  */
 import type { QueueHealth } from "@flowpilot/core";
 
 export const colors = {
   background: "#FFF7E6",
   card: "#FFFFFF",
-  border: "#E6E6E6",
+  border: "#111111",
   text: "#111111",
   /** Secondary copy — the meta line and helper text. */
   muted: "#6B6B6B",
   primary: "#FFD233",
   pink: "#FF4DA6",
-  purple: "#7861FF",
+  purple: "#7B61FF",
   green: "#22C55E",
   /**
    * Critical red. The status indicator in the design is red rather than the
@@ -59,3 +63,11 @@ export const radius = {
  * against this rather than eyeballed.
  */
 export const MIN_TOUCH_TARGET = 48;
+
+/** NeoBox's hard-shadow geometry: outline weight and the offset it sits behind. */
+export const neo = {
+  borderWidth: 2,
+  shadowOffset: 4,
+  /** The smaller offset used by buttons and badges, so tap targets don't feel oversized. */
+  shadowOffsetSmall: 3,
+} as const;

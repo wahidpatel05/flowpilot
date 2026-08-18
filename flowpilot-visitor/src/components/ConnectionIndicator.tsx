@@ -11,7 +11,7 @@
  */
 import { StyleSheet, Text, View } from "react-native";
 import type { ConnectionState } from "../token/connectionState";
-import { colors, spacing } from "../theme";
+import { colors, neo, spacing } from "../theme";
 
 interface ConnectionIndicatorProps {
   state: ConnectionState;
@@ -23,26 +23,33 @@ export function ConnectionIndicator({ state }: ConnectionIndicatorProps) {
   const label = isLive ? "Live" : "Reconnecting…";
 
   return (
-    <View style={styles.row} accessibilityLabel={`Connection: ${label}`}>
+    <View style={styles.badge} accessibilityLabel={`Connection: ${label}`}>
       <View style={[styles.dot, { backgroundColor: tint }]} />
-      <Text style={[styles.label, { color: tint }]}>{label}</Text>
+      <Text style={styles.label}>{label}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  row: {
+  badge: {
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.xs,
+    borderWidth: neo.borderWidth - 0.5,
+    borderColor: colors.border,
+    borderRadius: 999,
+    paddingVertical: spacing.xs - 2,
+    paddingHorizontal: spacing.sm,
+    backgroundColor: colors.card,
   },
   dot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   label: {
+    color: colors.text,
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: "700",
   },
 });

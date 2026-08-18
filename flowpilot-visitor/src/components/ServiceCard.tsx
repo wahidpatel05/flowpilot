@@ -10,8 +10,9 @@
 import { StyleSheet, Text, View } from "react-native";
 import type { ServiceCardModel } from "../facility/catalogue";
 import { HealthIndicator } from "./HealthIndicator";
-import { PrimaryButton } from "./PrimaryButton";
-import { colors, radius, spacing } from "../theme";
+import { Button } from "./Button";
+import { NeoBox } from "./NeoBox";
+import { colors, healthColor, radius, spacing } from "../theme";
 
 interface ServiceCardProps {
   service: ServiceCardModel;
@@ -23,13 +24,19 @@ interface ServiceCardProps {
 }
 
 export function ServiceCard({ service, onJoin, isJoining, disabled }: ServiceCardProps) {
+  // A closed Service gets the same grey the dot below uses, not a colour that
+  // implies something is wrong with the queue.
+  const accentColor = service.isOpen ? healthColor[service.health] : colors.grey;
+
   return (
-    <View
+    <NeoBox
+      radius={radius.lg}
       style={styles.card}
       accessible
       accessibilityRole="summary"
       accessibilityLabel={`${service.name}. ${service.metaLabel}. Health: ${service.healthLabel}.`}
     >
+      <View style={[styles.accent, { backgroundColor: accentColor }]} />
       <Text style={styles.name} numberOfLines={2}>
         {service.name}
       </Text>
@@ -43,7 +50,7 @@ export function ServiceCard({ service, onJoin, isJoining, disabled }: ServiceCar
           isOpen={service.isOpen}
         />
         <View style={styles.joinButton}>
-          <PrimaryButton
+          <Button
             label="Join Queue"
             onPress={() => onJoin(service)}
             disabled={disabled}
@@ -52,7 +59,7 @@ export function ServiceCard({ service, onJoin, isJoining, disabled }: ServiceCar
           />
         </View>
       </View>
-    </View>
+    </NeoBox>
   );
 }
 
@@ -60,12 +67,20 @@ const styles = StyleSheet.create({
   card: {
     justifyContent: "center",
     gap: spacing.xs + 2,
-    paddingVertical: spacing.md,
+    paddingTop: spacing.md + 4,
+    paddingBottom: spacing.md,
     paddingHorizontal: spacing.md,
-    backgroundColor: colors.card,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
+    overflow: "hidden",
+  },
+  // The folder-tab motif from the reference boards, reused as the Health
+  // signal: a coloured strip along the card's own top edge rather than a
+  // separate protruding shape, so it never fights the card's hard shadow.
+  accent: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 6,
   },
   name: {
     color: colors.text,

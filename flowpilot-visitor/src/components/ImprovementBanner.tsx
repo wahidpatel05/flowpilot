@@ -5,7 +5,7 @@
  */
 import { useEffect, useRef, useState } from "react";
 import { Animated, StyleSheet, Text } from "react-native";
-import { colors, radius, spacing } from "../theme";
+import { colors, neo, radius, spacing } from "../theme";
 import { useFireOnce } from "../token/useFireOnce";
 
 const FADE_IN_MS = 220;
@@ -20,24 +20,37 @@ interface ImprovementBannerProps {
 export function ImprovementBanner({ triggerKey }: ImprovementBannerProps) {
   const [visible, setVisible] = useState(false);
   const opacity = useRef(new Animated.Value(0)).current;
+  // Entrance is a pop rather than a plain fade, matching the design's
+  // notification "Pop Bounce" motion; the exit stays a plain fade.
+  const scale = useRef(new Animated.Value(0.9)).current;
   const isMountedRef = useRef(true);
   useEffect(
     () => () => {
       isMountedRef.current = false;
       opacity.stopAnimation();
+      scale.stopAnimation();
     },
-    [opacity],
+    [opacity, scale],
   );
 
   useFireOnce(triggerKey, () => {
     setVisible(true);
     opacity.setValue(0);
+    scale.setValue(0.9);
     Animated.sequence([
-      Animated.timing(opacity, {
-        toValue: 1,
-        duration: FADE_IN_MS,
-        useNativeDriver: true,
-      }),
+      Animated.parallel([
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: FADE_IN_MS,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scale, {
+          toValue: 1,
+          useNativeDriver: true,
+          speed: 14,
+          bounciness: 10,
+        }),
+      ]),
       Animated.delay(HOLD_MS),
       Animated.timing(opacity, {
         toValue: 0,
@@ -53,7 +66,7 @@ export function ImprovementBanner({ triggerKey }: ImprovementBannerProps) {
 
   return (
     <Animated.View
-      style={[styles.banner, { opacity }]}
+      style={[styles.banner, { opacity, transform: [{ scale }] }]}
       accessibilityLiveRegion="polite"
       accessibilityRole="text"
     >
@@ -65,6 +78,8 @@ export function ImprovementBanner({ triggerKey }: ImprovementBannerProps) {
 const styles = StyleSheet.create({
   banner: {
     backgroundColor: colors.green,
+    borderWidth: neo.borderWidth,
+    borderColor: colors.border,
     borderRadius: radius.md,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,

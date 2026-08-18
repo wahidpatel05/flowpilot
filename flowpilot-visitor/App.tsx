@@ -14,6 +14,7 @@ import type { ServiceCardModel } from "./src/facility/catalogue";
 import { ServiceCatalogueScreen } from "./src/screens/ServiceCatalogueScreen";
 import { LiveTokenScreen } from "./src/screens/LiveTokenScreen";
 import { StateMessage } from "./src/components/StateMessage";
+import { ScreenTransition } from "./src/components/ScreenTransition";
 import {
   clearActiveToken,
   loadActiveToken,
@@ -31,6 +32,11 @@ export default function App() {
   );
   const [joiningServiceId, setJoiningServiceId] = useState<string | null>(null);
   const [joinError, setJoinError] = useState<string | null>(null);
+  // TRUE only for the Token this session just created — never for one loaded
+  // back from AsyncStorage on launch. Read once by LiveTokenScreen at its own
+  // mount (see its `justJoined` prop), so the pop animation plays exactly at
+  // the moment a Token is generated, not on every relaunch with one held.
+  const [justJoined, setJustJoined] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -54,6 +60,7 @@ export default function App() {
         serviceName: service.name,
       };
       await saveActiveToken(stored);
+      setJustJoined(true);
       setActiveToken(stored);
     } catch (caught) {
       setJoinError(caught instanceof Error ? caught.message : String(caught));
@@ -76,17 +83,22 @@ export default function App() {
           <StateMessage isLoading title="" />
         </View>
       ) : activeToken === null ? (
-        <ServiceCatalogueScreen
-          onJoin={(service) => void handleJoin(service)}
-          joiningServiceId={joiningServiceId}
-          joinError={joinError}
-        />
+        <ScreenTransition key="catalogue">
+          <ServiceCatalogueScreen
+            onJoin={(service) => void handleJoin(service)}
+            joiningServiceId={joiningServiceId}
+            joinError={joinError}
+          />
+        </ScreenTransition>
       ) : (
-        <LiveTokenScreen
-          tokenId={activeToken.tokenId}
-          serviceNameHint={activeToken.serviceName}
-          onDone={handleDone}
-        />
+        <ScreenTransition key="live-token">
+          <LiveTokenScreen
+            tokenId={activeToken.tokenId}
+            serviceNameHint={activeToken.serviceName}
+            justJoined={justJoined}
+            onDone={handleDone}
+          />
+        </ScreenTransition>
       )}
     </SafeAreaProvider>
   );

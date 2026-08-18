@@ -5,7 +5,7 @@
  * the same wording and the same retry affordance everywhere.
  */
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
-import { PrimaryButton } from "./PrimaryButton";
+import { Button } from "./Button";
 import { colors, spacing } from "../theme";
 
 interface StateMessageProps {
@@ -22,7 +22,7 @@ export function StateMessage({ title, detail, isLoading, retry }: StateMessagePr
       <Text style={styles.title}>{title}</Text>
       {detail !== undefined && <Text style={styles.detail}>{detail}</Text>}
       {retry !== undefined && (
-        <PrimaryButton label={retry.label} onPress={retry.onPress} />
+        <Button label={retry.label} onPress={retry.onPress} />
       )}
     </View>
   );

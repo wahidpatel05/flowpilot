@@ -15,27 +15,38 @@
  * (derived from status/ETA/position, not a timer), the connection indicator
  * (from useLiveToken's channel tracking), and Leave queue — an ordinary
  * status update, confirmed first since it can't be undone from here.
+ *
+ * While actively queueing (`customersAhead` is known), the layout follows the
+ * design's "You're in Queue" board: badge, position line, the queue
+ * illustration, then the big ETA — rather than the plain badge+headline shown
+ * for the static status messages (called/serving/completed/…), where there is
+ * no queue standing left to illustrate.
  */
 import { useEffect, useRef, useState } from "react";
-import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import { StateMessage } from "../components/StateMessage";
 import { HealthIndicator } from "../components/HealthIndicator";
-import { PrimaryButton } from "../components/PrimaryButton";
+import { Button } from "../components/Button";
+import { ConfirmModal } from "../components/ConfirmModal";
 import { EtaHeadline } from "../components/EtaHeadline";
 import { ImprovementBanner } from "../components/ImprovementBanner";
 import { FreedomRadiusBadge } from "../components/FreedomRadiusBadge";
 import { ConnectionIndicator } from "../components/ConnectionIndicator";
+import { QueueLineIllustration } from "../components/QueueLineIllustration";
+import { TokenPop } from "../components/TokenPop";
 import { cancelToken } from "../token/cancelToken";
 import { deriveFreedomRadius } from "../token/freedomRadius";
 import { useLiveToken } from "../token/useLiveToken";
 import { getSupabaseClient } from "../supabase";
-import { colors, spacing } from "../theme";
+import { colors, neo, spacing } from "../theme";
 
 interface LiveTokenScreenProps {
   tokenId: string;
   serviceNameHint: string;
+  /** TRUE only for the Token this session just created — see App.tsx. */
+  justJoined: boolean;
   /** Called once the Visitor is done looking at a terminal Token. */
   onDone: () => void;
 }
@@ -43,6 +54,7 @@ interface LiveTokenScreenProps {
 export function LiveTokenScreen({
   tokenId,
   serviceNameHint,
+  justJoined,
   onDone,
 }: LiveTokenScreenProps) {
   const { model, isLoading, error, notFound, improvedAt, connectionState } = useLiveToken(
@@ -51,6 +63,11 @@ export function LiveTokenScreen({
   );
   const [isCancelling, setIsCancelling] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
+  const [isLeaveModalVisible, setIsLeaveModalVisible] = useState(false);
+  // Frozen at mount: this screen mounts once per Token session, and the pop
+  // must only ever play for that first mount's answer, never replay off a
+  // prop change.
+  const [showPop, setShowPop] = useState(() => justJoined);
 
   // Independent of the visual pieces: if haptics are unavailable (no
   // hardware, permissions, running on web), the crossfade and banner still
@@ -81,10 +98,8 @@ export function LiveTokenScreen({
   }
 
   function confirmLeaveQueue() {
-    Alert.alert("Leave this queue?", "You'll lose your place and will need to rejoin.", [
-      { text: "Stay in queue", style: "cancel" },
-      { text: "Leave queue", style: "destructive", onPress: () => void handleLeaveQueue() },
-    ]);
+    setIsLeaveModalVisible(false);
+    void handleLeaveQueue();
   }
 
   if (notFound) {
@@ -156,27 +171,33 @@ export function LiveTokenScreen({
 
         {!model.isTerminal && (
           <View style={styles.leaveQueue}>
-            <Pressable
-              onPress={confirmLeaveQueue}
-              disabled={isCancelling}
-              accessibilityRole="button"
-              accessibilityLabel="Leave queue"
-              hitSlop={8}
-            >
-              <Text style={[styles.leaveQueueLabel, isCancelling && styles.leaveQueueDisabled]}>
-                {isCancelling ? "Leaving…" : "Leave queue"}
-              </Text>
-            </Pressable>
+            <Button
+              label="Leave queue"
+              variant="text"
+              danger
+              loading={isCancelling}
+              onPress={() => setIsLeaveModalVisible(true)}
+            />
             {cancelError !== null && <Text style={styles.cancelError}>{cancelError}</Text>}
           </View>
         )}
 
         {model.isTerminal && (
           <View style={styles.doneButton}>
-            <PrimaryButton label="Back to services" onPress={onDone} />
+            <Button label="Back to services" onPress={onDone} />
           </View>
         )}
       </View>
+
+      <ConfirmModal
+        visible={isLeaveModalVisible}
+        title="Leave this queue?"
+        message="You'll lose your place and will need to rejoin."
+        confirmLabel="Leave queue"
+        cancelLabel="Stay in queue"
+        onConfirm={confirmLeaveQueue}
+        onCancel={() => setIsLeaveModalVisible(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -203,7 +224,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 1,
     backgroundColor: colors.card,
-    borderWidth: 1,
+    borderWidth: neo.borderWidth,
     borderColor: colors.border,
     borderRadius: 999,
     paddingVertical: spacing.xs,
@@ -237,16 +258,6 @@ const styles = StyleSheet.create({
     marginTop: spacing.lg,
     alignItems: "center",
     gap: spacing.xs,
-  },
-  leaveQueueLabel: {
-    color: colors.muted,
-    fontSize: 14,
-    fontWeight: "600",
-    textDecorationLine: "underline",
-    paddingVertical: spacing.xs,
-  },
-  leaveQueueDisabled: {
-    opacity: 0.5,
   },
   cancelError: {
     color: colors.red,
