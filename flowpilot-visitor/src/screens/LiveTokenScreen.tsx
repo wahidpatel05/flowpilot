@@ -69,12 +69,13 @@ export function LiveTokenScreen({
     setIsCancelling(true);
     try {
       await cancelToken(getSupabaseClient(), tokenId);
-      // No local state change here: the `tokens` subscription this same
-      // Service is already on (see useLiveToken) picks up this row's own
-      // update and refetches — one path for "the Token changed," not two.
+      // isCancelling stays true on success — it only resets on failure. The
+      // Token's actual status still comes from the `tokens` subscription (see
+      // useLiveToken), which flips model.isTerminal and unmounts this whole
+      // section; resetting it here too would re-enable "Leave queue" for
+      // whatever's left of the poll/debounce window before that lands.
     } catch (caught) {
       setCancelError(caught instanceof Error ? caught.message : String(caught));
-    } finally {
       setIsCancelling(false);
     }
   }
