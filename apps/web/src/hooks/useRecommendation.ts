@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { recommendIntervention, type FacilityProjection } from "../lib/core";
 import { ACTIVE_RECOMMENDATION_STATUS, type RecommendationRow } from "../lib/recommendationRow";
+import type { ToastsController } from "./useToasts";
+import { useTransientFlag } from "./useTransientFlag";
 
 const SELECT_COLUMNS =
   "id,service_id,action_type,action_payload,baseline_wait,predicted_wait,baseline_person_minutes,predicted_person_minutes,estimated_minutes_returned,confidence,status,created_at";
@@ -25,10 +27,14 @@ export interface RecommendationEngine {
    * hasn't landed yet.
    */
   noRecommendation: boolean;
+  /** TRUE while the engine is being asked and a candidate persisted. */
+  generating: boolean;
   /** The RPC's own message on an approve/reject failure — never swallowed. */
   actionError: string | null;
   /** Which action is in flight, or null. */
   pendingAction: RecommendationAction | null;
+  /** TRUE for a few seconds right after an approval succeeds — an avatar beat, not state. */
+  justApproved: boolean;
   approve: (id: string) => void;
   reject: (id: string, reason: string) => void;
 }
@@ -40,14 +46,25 @@ export interface RecommendationEngine {
  * asks the engine and persists whatever it returns — Gemini never selects or
  * scores an Intervention (W3 acceptance criteria). Approve and reject always go
  * through the RPCs in INTEGRATION.md's table, never a direct write.
+ *
+ * `notify` is the toast stack: every terminal outcome here (approved, rejected,
+ * or an RPC/insert failure) also lands as a toast, in addition to the inline
+ * `actionError` a screen reader or a glance at the card already surfaces.
  */
-export function useRecommendation(projection: FacilityProjection | null): RecommendationEngine {
+export function useRecommendation(
+  projection: FacilityProjection | null,
+  notify: ToastsController,
+): RecommendationEngine {
   const [active, setActive] = useState<RecommendationRow | null>(null);
   const [checked, setChecked] = useState(false);
   const [noRecommendation, setNoRecommendation] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [pendingAction, setPendingAction] = useState<RecommendationAction | null>(null);
+  const [justApproved, triggerJustApproved] = useTransientFlag(3000);
   const generatingRef = useRef(false);
+  const notifyRef = useRef(notify);
+  notifyRef.current = notify;
 
   const loadActive = useCallback(async () => {
     const { data, error } = await supabase
@@ -91,6 +108,7 @@ export function useRecommendation(projection: FacilityProjection | null): Recomm
     if (projection === null || !checked || active !== null || generatingRef.current) return;
 
     generatingRef.current = true;
+    setGenerating(true);
     void (async () => {
       try {
         const recommendation = recommendIntervention({
@@ -119,49 +137,72 @@ export function useRecommendation(projection: FacilityProjection | null): Recomm
         });
 
         if (error !== null) {
-          setActionError(`FlowPilot: failed to persist the Recommendation — ${error.message}`);
+          const msg = `FlowPilot: failed to persist the Recommendation — ${error.message}`;
+          setActionError(msg);
+          notifyRef.current.push("error", "Couldn't save the Recommendation", error.message);
           return;
         }
         setNoRecommendation(false);
         await loadActive();
       } finally {
         generatingRef.current = false;
+        setGenerating(false);
       }
     })();
   }, [projection, checked, active, loadActive]);
 
-  const approve = useCallback((id: string) => {
-    setPendingAction("approve");
-    setActionError(null);
-    void (async () => {
-      const { error } = await supabase.rpc("approve_recommendation", {
-        p_recommendation_id: id,
-      });
-      if (error !== null) {
-        setActionError(error.message);
-      } else {
-        await loadActive();
-      }
-      setPendingAction(null);
-    })();
-  }, [loadActive]);
+  const approve = useCallback(
+    (id: string) => {
+      setPendingAction("approve");
+      setActionError(null);
+      void (async () => {
+        const { error } = await supabase.rpc("approve_recommendation", {
+          p_recommendation_id: id,
+        });
+        if (error !== null) {
+          setActionError(error.message);
+          notifyRef.current.push("error", "Approval failed", error.message);
+        } else {
+          await loadActive();
+          notifyRef.current.push("success", "Recommendation approved", "It's on its way to the Desk.");
+          triggerJustApproved();
+        }
+        setPendingAction(null);
+      })();
+    },
+    [loadActive, triggerJustApproved],
+  );
 
-  const reject = useCallback((id: string, reason: string) => {
-    setPendingAction("reject");
-    setActionError(null);
-    void (async () => {
-      const { error } = await supabase.rpc("reject_recommendation", {
-        p_recommendation_id: id,
-        p_reason: reason,
-      });
-      if (error !== null) {
-        setActionError(error.message);
-      } else {
-        await loadActive();
-      }
-      setPendingAction(null);
-    })();
-  }, [loadActive]);
+  const reject = useCallback(
+    (id: string, reason: string) => {
+      setPendingAction("reject");
+      setActionError(null);
+      void (async () => {
+        const { error } = await supabase.rpc("reject_recommendation", {
+          p_recommendation_id: id,
+          p_reason: reason,
+        });
+        if (error !== null) {
+          setActionError(error.message);
+          notifyRef.current.push("error", "Reject failed", error.message);
+        } else {
+          await loadActive();
+          notifyRef.current.push("info", "Recommendation rejected", reason);
+        }
+        setPendingAction(null);
+      })();
+    },
+    [loadActive],
+  );
 
-  return { active, noRecommendation, actionError, pendingAction, approve, reject };
+  return {
+    active,
+    noRecommendation,
+    generating,
+    actionError,
+    pendingAction,
+    justApproved,
+    approve,
+    reject,
+  };
 }

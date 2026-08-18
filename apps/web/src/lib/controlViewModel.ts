@@ -63,6 +63,13 @@ export interface ControlTotals {
   servicesStalled: number;
 }
 
+/** How many Services sit in each Health band right now. Always sums to `services.length`. */
+export interface HealthBreakdown {
+  healthy: number;
+  busy: number;
+  critical: number;
+}
+
 export interface ControlViewModel {
   observedAtMillis: number;
   horizonMinutes: number;
@@ -75,6 +82,8 @@ export interface ControlViewModel {
   totals: ControlTotals;
   /** Widest `layer` value, so a renderer can size its columns. */
   maxLayer: number;
+  /** Current (not forecast) Health band counts, for a status donut. */
+  healthBreakdown: HealthBreakdown;
 }
 
 export interface BuildControlViewModelInput {
@@ -250,6 +259,13 @@ export function buildControlViewModel(
       servicesStalled,
     },
     maxLayer: services.reduce((max, node) => Math.max(max, node.layer), 0),
+    healthBreakdown: services.reduce<HealthBreakdown>(
+      (breakdown, node) => {
+        breakdown[node.now.health] += 1;
+        return breakdown;
+      },
+      { healthy: 0, busy: 0, critical: 0 },
+    ),
   };
 }
 
@@ -260,6 +276,21 @@ export function findControlNode(
 ): ControlServiceNode | undefined {
   if (serviceId === null) return undefined;
   return viewModel.services.find((node) => node.serviceId === serviceId);
+}
+
+/**
+ * The Service the "Live Queue Visualization" panel should feature: whichever
+ * one is critical now, or — when nothing is — the one carrying the longest
+ * line, so the panel never goes blank just because nothing has crossed the
+ * critical threshold yet. Undefined only when there are no Services at all.
+ */
+export function pickFeaturedService(viewModel: ControlViewModel): ControlServiceNode | undefined {
+  const critical = findControlNode(viewModel, viewModel.criticalNow);
+  if (critical !== undefined) return critical;
+  return viewModel.services.reduce<ControlServiceNode | undefined>((best, node) => {
+    if (best === undefined) return node;
+    return node.now.queueLength > best.now.queueLength ? node : best;
+  }, undefined);
 }
 
 /** Re-exported so components never reach past this module into the engine. */

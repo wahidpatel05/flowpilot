@@ -43,6 +43,26 @@ function buildNameLookup(
   return lookup;
 }
 
+/** service id -> the Token currently being served there, for a "Now Serving" widget. */
+export type NowServingLookup = Readonly<Record<string, string>>;
+
+function buildNowServingLookup(
+  rows: readonly { service_id: string; token_number?: string | null; status: string; service_started_at?: string | number | Date | null }[] | undefined,
+): NowServingLookup {
+  const latestStartedAtByService = new Map<string, number>();
+  const lookup: Record<string, string> = {};
+  for (const row of rows ?? []) {
+    if (row.status !== "serving") continue;
+    const startedAtMillis = row.service_started_at ? Date.parse(String(row.service_started_at)) : 0;
+    const current = latestStartedAtByService.get(row.service_id) ?? -Infinity;
+    if (startedAtMillis >= current) {
+      latestStartedAtByService.set(row.service_id, startedAtMillis);
+      lookup[row.service_id] = row.token_number ?? "";
+    }
+  }
+  return lookup;
+}
+
 export interface LiveFacility {
   projection: FacilityProjection | null;
   /**
@@ -59,6 +79,8 @@ export interface LiveFacility {
    */
   staffNames: NameLookup;
   counterNames: NameLookup;
+  /** service id -> the Token number currently being served there. */
+  nowServing: NowServingLookup;
   connection: ConnectionState;
   error: string | null;
   /** Refetch on demand — used right after a demo-control RPC. */
@@ -77,6 +99,7 @@ export function useLiveFacility(): LiveFacility {
   const [flowEdges, setFlowEdges] = useState<readonly ServiceFlowEdgeRow[]>([]);
   const [staffNames, setStaffNames] = useState<NameLookup>({});
   const [counterNames, setCounterNames] = useState<NameLookup>({});
+  const [nowServing, setNowServing] = useState<NowServingLookup>({});
   const [error, setError] = useState<string | null>(null);
   const [connection, dispatch] = useReducer(connectionReducer, initialConnectionState);
   const isMounted = useRef(true);
@@ -107,6 +130,7 @@ export function useLiveFacility(): LiveFacility {
       setFlowEdges(rows.serviceFlowEdges ?? []);
       setStaffNames(buildNameLookup(rows.staff));
       setCounterNames(buildNameLookup(rows.counters));
+      setNowServing(buildNowServingLookup(rows.tokens));
       setError(null);
     } catch (err) {
       if (!isMounted.current || requestId !== latestRequestId.current) return;
@@ -169,5 +193,5 @@ export function useLiveFacility(): LiveFacility {
     void refetch.current();
   }, []);
 
-  return { projection, flowEdges, staffNames, counterNames, connection, error, refresh };
+  return { projection, flowEdges, staffNames, counterNames, nowServing, connection, error, refresh };
 }
