@@ -1,5 +1,5 @@
 ---
-status: accepted
+status: superseded by ADR-0004
 ---
 
 # The Visitor PWA is cut; Android owns the visitor experience

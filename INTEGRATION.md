@@ -40,7 +40,7 @@ repos costs you more than 5 minutes; just never edit your copy.
 The demo is one causal chain. Each arrow is an owner boundary, and an unowned arrow is a dead demo.
 
 ```
-Visitor joins            → Android          writes  tokens
+Visitor joins            → Android / PWA    writes  tokens
 Control sees it          → Control          subscribes  tokens
 Simulate Rush            → Control          calls  simulate_rush()
 Forecast + Digital Twin  → Control          calls  simulateFacility()
@@ -49,7 +49,7 @@ Manager approves         → Control          rpc  approve_recommendation()
 Desk receives            → Desk             subscribes  interventions
 Staff accepts            → Desk             rpc  accept_intervention()
 CAPACITY ACTUALLY CHANGES→ POSTGRES        rpc  apply_intervention()  ← THE KEYSTONE
-Visitor ETA drops        → Android          subscribes  counter_assignments, recomputes ETA
+Visitor ETA drops        → Android / PWA    subscribes  counter_assignments, recomputes ETA
 Time returned rises      → Control          reads  interventions
 Timeline explains        → Control          subscribes  intervention_events
 ```
@@ -100,3 +100,22 @@ service-role key is needed anywhere in FlowPilot.
 Every one is `security definer` and granted to `anon`, so call them with `supabase.rpc('name', {...})`
 using the publishable key. They raise `P0001` with a human-readable message on invalid state — surface
 that message to the operator rather than swallowing it.
+
+## Build order — this is a constraint, not a preference
+
+Website team, in this order, and do not start one before the previous works end to end:
+
+1. **Control** — the Digital Twin, the Recommendation card, Apply, Estimated Time Returned, the
+   timeline. This is the surface judges score. It gets the most time because it earns the most.
+2. **Desk** — Call Next, Start, Complete, Accept assignment. Four big buttons. It is allowed to be
+   plain; it is on stage for about four seconds.
+3. **Visitor PWA** — one route, insurance scope only, per `docs/adr/0004-insurance-grade-visitor-pwa.md`.
+   Service list, Join Queue, token number, ETA, people ahead, live ETA update. Nothing else.
+
+If the clock runs out, the PWA is what doesn't ship. That is the plan, not a failure — the Android app
+is the primary visitor surface and the PWA exists only so a dead phone can't kill the demo.
+
+## Rehearse the failure, once
+
+Before judging, run the golden path once with the phone deliberately switched off, using the PWA in a
+browser instead. It takes two minutes and converts your single biggest stage risk into a shrug.
