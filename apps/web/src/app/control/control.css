@@ -350,14 +350,14 @@
 
 /* ---- Global metric label/value used by several small widgets ---- */
 
-.fp-metric-label {
+.fp-control .fp-metric-label {
   color: var(--fp-muted);
   font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
 
-.fp-metric-unit {
+.fp-control .fp-metric-unit {
   font-size: 0.9rem;
   font-weight: 500;
   color: var(--fp-muted);
@@ -700,7 +700,7 @@
   gap: 0.45rem;
 }
 
-.fp-health-dot {
+.fp-control .fp-health-dot {
   width: 0.4rem;
   height: 0.4rem;
   border-radius: 999px;
@@ -1222,13 +1222,13 @@
 
 /* ---- Chips ---- */
 
-.fp-chip-row {
+.fp-control .fp-chip-row {
   display: flex;
   gap: 0.4rem;
   flex-wrap: wrap;
 }
 
-.fp-chip {
+.fp-control .fp-chip {
   appearance: none;
   font: inherit;
   font-size: 0.78rem;
@@ -1242,11 +1242,11 @@
   transition: transform 120ms ease, background 120ms ease, color 120ms ease, border-color 120ms ease;
 }
 
-.fp-chip:hover {
+.fp-control .fp-chip:hover {
   transform: translateY(-1px);
 }
 
-.fp-chip[data-active="true"] {
+.fp-control .fp-chip[data-active="true"] {
   background: var(--fp-yellow);
   border-color: var(--fp-yellow);
   color: #111111;
@@ -1381,26 +1381,26 @@
   color: #5b3fd6;
 }
 
-.fp-queue-line {
+.fp-control .fp-queue-line {
   display: flex;
   align-items: flex-end;
   margin: 0.5rem 0 1.1rem;
   min-height: 3.4rem;
 }
 
-.fp-queue-person {
+.fp-control .fp-queue-person {
   width: 2rem;
   margin-right: -0.55rem;
   animation: fp-queue-walk-in 380ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-.fp-queue-person svg {
+.fp-control .fp-queue-person svg {
   width: 100%;
   height: auto;
   display: block;
 }
 
-.fp-queue-overflow {
+.fp-control .fp-queue-overflow {
   margin-left: 0.9rem;
   align-self: center;
   font-size: 0.8rem;
@@ -1408,7 +1408,7 @@
   color: var(--fp-muted);
 }
 
-.fp-queue-line-empty {
+.fp-control .fp-queue-line-empty {
   color: var(--fp-muted);
   font-size: 0.85rem;
   margin: 0.75rem 0 1.1rem;
