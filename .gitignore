@@ -4,6 +4,7 @@ build/
 .next/
 .expo/
 coverage/
+*.tsbuildinfo
 
 # Secrets — never commit these
 .env
@@ -18,3 +19,4 @@ Thumbs.db
 
 # Agent scratch
 .scratch/
+.claude/
