@@ -17,7 +17,7 @@
  * FR-006 requires an explicit fallback if Realtime fails, so a slow poll runs
  * alongside the subscriptions regardless of whether they are behaving.
  */
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { projectFacility } from "@flowpilot/core";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import type { TokenRow } from "@flowpilot/core";
@@ -49,14 +49,6 @@ export function useLiveToken(
     error: null,
     notFound: false,
   });
-
-  const isMountedRef = useRef(true);
-  useEffect(() => {
-    isMountedRef.current = true;
-    return () => {
-      isMountedRef.current = false;
-    };
-  }, []);
 
   useEffect(() => {
     const client = getSupabaseClient();
