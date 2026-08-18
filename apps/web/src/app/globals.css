@@ -224,3 +224,203 @@ a {
   padding: 3rem 0;
   text-align: center;
 }
+
+/* ---------------------------------------------------------------------
+ * Visitor PWA — softer companion theme (docs/adr/0004). Same mint identity
+ * as Control, lighter surfaces and rounder shapes because this runs in a
+ * stranger's hand on their own phone, not on an operator's desk.
+ * --------------------------------------------------------------------- */
+.fp-visitor-page {
+  --fp-visitor-bg: #0d1210;
+  --fp-visitor-surface: #141b18;
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  padding: 2.5rem 1.25rem 3rem;
+  background: var(--fp-visitor-bg);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.fp-visitor-header {
+  text-align: center;
+}
+
+.fp-visitor-title {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--fp-mint);
+  letter-spacing: -0.01em;
+}
+
+.fp-visitor-subtitle {
+  margin: 0.4rem 0 0;
+  color: var(--fp-muted);
+  font-size: 0.9rem;
+}
+
+.fp-visitor-service-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.fp-visitor-service-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1.1rem 1.25rem;
+  border-radius: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--fp-visitor-surface);
+  color: var(--fp-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.fp-visitor-service-button:hover:not(:disabled) {
+  border-color: rgba(102, 242, 179, 0.4);
+}
+
+.fp-visitor-service-button:active:not(:disabled) {
+  transform: scale(0.99);
+}
+
+.fp-visitor-service-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.fp-visitor-service-name {
+  font-weight: 600;
+  font-size: 1.02rem;
+}
+
+.fp-visitor-service-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-shrink: 0;
+}
+
+.fp-visitor-service-wait {
+  font-size: 0.85rem;
+  color: var(--fp-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.fp-visitor-card {
+  background: var(--fp-visitor-surface);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1.5rem;
+  padding: 2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  text-align: center;
+}
+
+.fp-visitor-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.fp-visitor-token-number {
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.fp-visitor-eta {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+
+.fp-visitor-eta-value {
+  font-size: 4rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  color: var(--fp-mint);
+}
+
+.fp-visitor-eta[data-health="busy"] .fp-visitor-eta-value {
+  color: var(--fp-amber);
+}
+
+.fp-visitor-eta[data-health="critical"] .fp-visitor-eta-value {
+  color: var(--fp-coral);
+}
+
+.fp-visitor-eta-unit {
+  font-size: 1.1rem;
+  color: var(--fp-muted);
+}
+
+.fp-visitor-eta-range {
+  margin: -0.75rem 0 0;
+  font-size: 0.8rem;
+  color: var(--fp-muted);
+}
+
+.fp-visitor-meta-row {
+  display: flex;
+  gap: 2rem;
+}
+
+.fp-visitor-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.fp-visitor-meta-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--fp-muted);
+}
+
+.fp-visitor-meta-value {
+  font-size: 1.3rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.fp-visitor-ended {
+  color: var(--fp-muted);
+  font-size: 0.9rem;
+}
+
+.fp-visitor-leave,
+.fp-visitor-button {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  padding: 0.75rem 1.5rem;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  background: transparent;
+  color: var(--fp-muted);
+}
+
+.fp-visitor-leave:hover,
+.fp-visitor-button:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+  color: var(--fp-text);
+}

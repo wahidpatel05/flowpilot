@@ -1,10 +1,5 @@
 import type { ProjectedService, QueueSnapshot } from "../lib/core";
-
-function formatWait(minutes: number): string {
-  if (!Number.isFinite(minutes)) return "—";
-  if (minutes < 1) return "<1";
-  return Math.round(minutes).toString();
-}
+import { formatWaitMinutes } from "../lib/formatMinutes";
 
 /**
  * Every number here is read, never computed. Health, predicted wait and the
@@ -49,7 +44,7 @@ export function ServiceCard({
         <div className="fp-metric">
           <span className="fp-metric-label">Predicted wait</span>
           <span className="fp-metric-value" data-emphasis="wait">
-            {formatWait(predictedWait)}
+            {formatWaitMinutes(predictedWait)}
             <span className="fp-metric-unit">min</span>
           </span>
         </div>
