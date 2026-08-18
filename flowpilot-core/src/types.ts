@@ -94,6 +94,14 @@ export interface FacilityServiceState {
   averageServiceMinutes: number;
   arrivalRatePerMinute: number;
   downstreamArrivalRatePerMinute?: number;
+  /**
+   * This Service's own Health bands, from `services.healthy_wait_threshold` /
+   * `services.critical_wait_threshold`. Optional, and omitting them falls back
+   * to the engine defaults — but pass them wherever they are known, or a
+   * simulated Health band will disagree with the live one for the same wait.
+   */
+  healthyThresholdMinutes?: number;
+  criticalThresholdMinutes?: number;
 }
 
 export interface SimulationInput {

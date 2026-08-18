@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useReducer, useRef, useState } from "react";
+import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { fetchFacilityRows } from "../lib/fetchFacilityRows";
 import {
@@ -9,7 +9,11 @@ import {
   shouldPoll,
   type ConnectionState,
 } from "../lib/connectionState";
-import { projectFacility, type FacilityProjection } from "../lib/core";
+import {
+  projectFacility,
+  type FacilityProjection,
+  type ServiceFlowEdgeRow,
+} from "../lib/core";
 
 /**
  * Tables whose changes can move a number rendered on this page. `counters`
@@ -28,8 +32,16 @@ const POLL_INTERVAL_MS = 5_000;
 
 export interface LiveFacility {
   projection: FacilityProjection | null;
+  /**
+   * The Flow Graph edges as fetched. The projection folds these into each
+   * Service's downstream arrival rate but does not carry the edges themselves,
+   * and Control needs the from/to pairs to actually draw the graph.
+   */
+  flowEdges: readonly ServiceFlowEdgeRow[];
   connection: ConnectionState;
   error: string | null;
+  /** Refetch on demand — used right after a demo-control RPC. */
+  refresh: () => void;
 }
 
 /**
@@ -41,6 +53,7 @@ export interface LiveFacility {
  */
 export function useLiveFacility(): LiveFacility {
   const [projection, setProjection] = useState<FacilityProjection | null>(null);
+  const [flowEdges, setFlowEdges] = useState<readonly ServiceFlowEdgeRow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [connection, dispatch] = useReducer(connectionReducer, initialConnectionState);
   const isMounted = useRef(true);
@@ -68,6 +81,7 @@ export function useLiveFacility(): LiveFacility {
       const rows = await fetchFacilityRows();
       if (!isMounted.current || requestId !== latestRequestId.current) return;
       setProjection(projectFacility(rows));
+      setFlowEdges(rows.serviceFlowEdges ?? []);
       setError(null);
     } catch (err) {
       if (!isMounted.current || requestId !== latestRequestId.current) return;
@@ -126,5 +140,9 @@ export function useLiveFacility(): LiveFacility {
     return () => clearInterval(id);
   }, [isPolling]);
 
-  return { projection, connection, error };
+  const refresh = useCallback(() => {
+    void refetch.current();
+  }, []);
+
+  return { projection, flowEdges, connection, error, refresh };
 }

@@ -155,3 +155,91 @@ describe("simulateFacility", () => {
     expect(perRunMs).toBeLessThan(1);
   });
 });
+
+describe("simulateFacility — Health bands honour each Service's own thresholds", () => {
+  /**
+   * A simulated Health band must agree with the live one for the same wait.
+   * Before these thresholds were carried through, simulateFacility always fell
+   * back to the engine defaults (10 / 25), so Examination Cell — whose real
+   * critical threshold is 30 — could read `busy` now and `critical` in the
+   * forecast for one and the same wait value.
+   */
+  it("uses the Service's own critical threshold instead of the default", () => {
+    // 1 counter, 6 min each => capacity 1/6 per min. Queue of 4.5 with no
+    // arrivals holds steady, giving a 27 min wait: over the 25 min default,
+    // under this Service's configured 30.
+    const withOwnThresholds = simulateFacility({
+      services: [
+        service({
+          serviceId: "examination",
+          queueLength: 4.5,
+          activeCounters: 1,
+          averageServiceMinutes: 6,
+          healthyThresholdMinutes: 15,
+          criticalThresholdMinutes: 30,
+        }),
+      ],
+      horizonMinutes: 0,
+    });
+
+    expect(withOwnThresholds.services[0]?.finalWaitMinutes).toBeCloseTo(27, 5);
+    expect(withOwnThresholds.services[0]?.health).toBe("busy");
+  });
+
+  it("still falls back to the engine defaults when thresholds are absent", () => {
+    const withoutThresholds = simulateFacility({
+      services: [
+        service({
+          serviceId: "examination",
+          queueLength: 4.5,
+          activeCounters: 1,
+          averageServiceMinutes: 6,
+        }),
+      ],
+      horizonMinutes: 0,
+    });
+
+    // Same 27 min wait, but 27 >= the 25 min default critical threshold.
+    expect(withoutThresholds.services[0]?.finalWaitMinutes).toBeCloseTo(27, 5);
+    expect(withoutThresholds.services[0]?.health).toBe("critical");
+  });
+
+  it("honours a generous healthy threshold", () => {
+    const result = simulateFacility({
+      services: [
+        service({
+          serviceId: "documents",
+          queueLength: 3,
+          activeCounters: 1,
+          averageServiceMinutes: 4,
+          healthyThresholdMinutes: 15,
+          criticalThresholdMinutes: 30,
+        }),
+      ],
+      horizonMinutes: 0,
+    });
+
+    // 12 min wait: `busy` under the 10 min default, `healthy` under this
+    // Service's own 15 min band.
+    expect(result.services[0]?.finalWaitMinutes).toBeCloseTo(12, 5);
+    expect(result.services[0]?.health).toBe("healthy");
+  });
+
+  it("keeps an unbounded wait critical regardless of thresholds", () => {
+    const result = simulateFacility({
+      services: [
+        service({
+          serviceId: "closed",
+          queueLength: 5,
+          activeCounters: 0,
+          healthyThresholdMinutes: 999,
+          criticalThresholdMinutes: 9999,
+        }),
+      ],
+      horizonMinutes: 0,
+    });
+
+    expect(result.services[0]?.finalWaitMinutes).toBe(Number.POSITIVE_INFINITY);
+    expect(result.services[0]?.health).toBe("critical");
+  });
+});
