@@ -8,6 +8,7 @@ Read this before writing a line on the website or the Android app. Three teams, 
 |---|---|---|
 | Frozen domain types | `flowpilot-core/src/types.ts` | backend/intelligence |
 | Queue + ETA engine | `flowpilot-core/src/queue/` | backend/intelligence |
+| Facility projection (rows → domain state) | `flowpilot-core/src/projection/` | backend/intelligence |
 | Facility simulation | `flowpilot-core/src/simulation/` | backend/intelligence |
 | Recommendation engine | `flowpilot-core/src/recommendation/` | backend/intelligence |
 | Estimated Time Returned | `flowpilot-core/src/metrics/` | backend/intelligence |
@@ -27,6 +28,21 @@ repos costs you more than 5 minutes; just never edit your copy.
    Postgres. A typo fails at insert time, which is the point.
 3. **Read `CONTEXT.md` before naming anything.** Two teams inventing two words for one concept is the
    most expensive bug available to us today.
+4. **Never derive facility state from rows yourself.** Call `projectFacility(rows, { now })` from
+   `flowpilot-core/src/projection/facility.ts`. It is the only place rows become domain state, and it
+   already encodes the rules you would otherwise get subtly wrong: active Counters come from `active`
+   `counter_assignments` and never from `counters.status` (ADR-0001); queue length counts `waiting`
+   and `called` only; the average service time cold-starts on `services.default_service_minutes`;
+   zero active Counters is an infinite ETA and `critical` Health, never `NaN`. It returns
+   `FacilityServiceState[]` and `QueueSnapshot[]`, so `simulateFacility` and `recommendIntervention`
+   take its output with no adaptation:
+
+   ```ts
+   const projection = projectFacility(rows);                        // rows → domain state
+   const snapshot   = findQueueSnapshot(projection, examinationId);  // queue length, ETA, Health
+   const visitorEta = projectTokenEta(projection, myTokenId);        // people ahead + this ETA
+   const rec        = recommendIntervention({ ...projection, horizonMinutes: 60 });
+   ```
 
 ## Two deviations from the spec sheet — these override it
 

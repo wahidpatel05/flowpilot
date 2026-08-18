@@ -28,6 +28,13 @@ export type InterventionStatus =
 export type AssignmentType = "primary" | "temporary";
 
 /**
+ * Lifecycle of a (staff, counter, service) Assignment. Mirrors the
+ * `counter_assignments.status` CHECK constraint. Only `active` Assignments
+ * contribute capacity — see docs/adr/0001-assignment-is-the-movable-unit.md.
+ */
+export type AssignmentStatus = "active" | "ended";
+
+/**
  * The two — and only two — things FlowPilot can do to capacity.
  *
  * The movable unit is an *assignment*: a (staff, counter, service) binding.
