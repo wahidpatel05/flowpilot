@@ -24,6 +24,11 @@ import type { TokenRow } from "@flowpilot/core";
 import { fetchServiceQueueRows } from "../facility/fetchServiceQueueRows";
 import { fetchTokenRow } from "../facility/fetchTokenRow";
 import { getSupabaseClient } from "../supabase";
+import {
+  deriveConnectionState,
+  type ChannelSubscribeStatus,
+  type ConnectionState,
+} from "./connectionState";
 import { didEtaImprove } from "./improvementMoment";
 import { buildLiveTokenModel, type LiveTokenModel } from "./tokenPresentation";
 
@@ -44,6 +49,8 @@ export interface LiveTokenState {
    * improvement moment exactly once per improvement, not once per render.
    */
   improvedAt: number | null;
+  /** A4's connection indicator: whether both Realtime channels below are actually subscribed. */
+  connectionState: ConnectionState;
 }
 
 export function useLiveToken(
@@ -56,6 +63,7 @@ export function useLiveToken(
     error: null,
     notFound: false,
     improvedAt: null,
+    connectionState: "connecting",
   });
 
   useEffect(() => {
@@ -65,6 +73,12 @@ export function useLiveToken(
     let cancelled = false;
     // Reset per Token — a new Token shouldn't inherit a stale celebration.
     let previousModel: LiveTokenModel | null = null;
+    // One slot per channel opened below (tokens, counter_assignments) — see
+    // subscribeToService. Fixed length, pre-filled undefined: deriveConnectionState
+    // treats a shorter array as "every reported channel happens to be
+    // SUBSCRIBED," which would read "live" after only one of two channels has
+    // actually confirmed.
+    const channelStatuses: (ChannelSubscribeStatus | undefined)[] = [undefined, undefined];
 
     // Position and ETA are only meaningful while still queueing; every other
     // status is a fixed message tokenPresentation renders without a
@@ -84,6 +98,17 @@ export function useLiveToken(
       debounceHandle = setTimeout(() => void refresh(), REFRESH_DEBOUNCE_MS);
     }
 
+    // Called once per channel, by index, whenever its subscribe status changes —
+    // recomputes the shared connectionState from every slot, not just this one.
+    function onChannelStatus(index: number, status: ChannelSubscribeStatus) {
+      channelStatuses[index] = status;
+      if (cancelled) return;
+      setState((previous) => ({
+        ...previous,
+        connectionState: deriveConnectionState(channelStatuses),
+      }));
+    }
+
     function subscribeToService(serviceId: string) {
       channels = [
         client
@@ -93,7 +118,7 @@ export function useLiveToken(
             { event: "*", schema: "public", table: "tokens", filter: `service_id=eq.${serviceId}` },
             scheduleRefresh,
           )
-          .subscribe(),
+          .subscribe((status) => onChannelStatus(0, status)),
         client
           .channel(`live-token-${tokenId}-assignments`)
           .on(
@@ -106,7 +131,7 @@ export function useLiveToken(
             },
             scheduleRefresh,
           )
-          .subscribe(),
+          .subscribe((status) => onChannelStatus(1, status)),
       ];
     }
 
@@ -125,6 +150,7 @@ export function useLiveToken(
             error: null,
             notFound: true,
             improvedAt: previous.improvedAt,
+            connectionState: previous.connectionState,
           }));
           return;
         }
@@ -139,6 +165,7 @@ export function useLiveToken(
           error: null,
           notFound: false,
           improvedAt: improved ? Date.now() : previous.improvedAt,
+          connectionState: previous.connectionState,
         }));
       } catch (caught) {
         if (cancelled) return;

@@ -10,9 +10,14 @@
  * just got shorter" message, and the effect below fires the success haptic —
  * three independent reactions to the same trigger, so a haptic failure (no
  * hardware support, permissions, web) can never block the other two.
+ *
+ * A4 adds three more things off the same model: the Freedom Radius badge
+ * (derived from status/ETA/position, not a timer), the connection indicator
+ * (from useLiveToken's channel tracking), and Leave queue — an ordinary
+ * status update, confirmed first since it can't be undone from here.
  */
-import { useEffect, useRef } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import { StateMessage } from "../components/StateMessage";
@@ -20,7 +25,12 @@ import { HealthIndicator } from "../components/HealthIndicator";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { EtaHeadline } from "../components/EtaHeadline";
 import { ImprovementBanner } from "../components/ImprovementBanner";
+import { FreedomRadiusBadge } from "../components/FreedomRadiusBadge";
+import { ConnectionIndicator } from "../components/ConnectionIndicator";
+import { cancelToken } from "../token/cancelToken";
+import { deriveFreedomRadius } from "../token/freedomRadius";
 import { useLiveToken } from "../token/useLiveToken";
+import { getSupabaseClient } from "../supabase";
 import { colors, spacing } from "../theme";
 
 interface LiveTokenScreenProps {
@@ -35,10 +45,12 @@ export function LiveTokenScreen({
   serviceNameHint,
   onDone,
 }: LiveTokenScreenProps) {
-  const { model, isLoading, error, notFound, improvedAt } = useLiveToken(
+  const { model, isLoading, error, notFound, improvedAt, connectionState } = useLiveToken(
     tokenId,
     serviceNameHint,
   );
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
 
   // Independent of the visual pieces: if haptics are unavailable (no
   // hardware, permissions, running on web), the crossfade and banner still
@@ -51,6 +63,29 @@ export function LiveTokenScreen({
       // Non-fatal — see the file-level comment.
     });
   }, [improvedAt]);
+
+  async function handleLeaveQueue() {
+    setCancelError(null);
+    setIsCancelling(true);
+    try {
+      await cancelToken(getSupabaseClient(), tokenId);
+      // isCancelling stays true on success — it only resets on failure. The
+      // Token's actual status still comes from the `tokens` subscription (see
+      // useLiveToken), which flips model.isTerminal and unmounts this whole
+      // section; resetting it here too would re-enable "Leave queue" for
+      // whatever's left of the poll/debounce window before that lands.
+    } catch (caught) {
+      setCancelError(caught instanceof Error ? caught.message : String(caught));
+      setIsCancelling(false);
+    }
+  }
+
+  function confirmLeaveQueue() {
+    Alert.alert("Leave this queue?", "You'll lose your place and will need to rejoin.", [
+      { text: "Stay in queue", style: "cancel" },
+      { text: "Leave queue", style: "destructive", onPress: () => void handleLeaveQueue() },
+    ]);
+  }
 
   if (notFound) {
     // A stale local pointer — e.g. reset_demo() ran. Nothing to show; leave
@@ -77,9 +112,19 @@ export function LiveTokenScreen({
 
   if (model === null) return null;
 
+  const freedomRadiusState = deriveFreedomRadius({
+    status: model.status,
+    etaMinutes: model.etaMinutes,
+    customersAhead: model.customersAhead,
+  });
+
   return (
     <SafeAreaView style={styles.screen}>
       <View style={styles.content}>
+        <View style={styles.topRow}>
+          <ConnectionIndicator state={connectionState} />
+        </View>
+
         <Text style={styles.tokenNumber}>{model.tokenNumber}</Text>
         <Text style={styles.serviceName}>{model.serviceName}</Text>
 
@@ -103,6 +148,29 @@ export function LiveTokenScreen({
           />
         )}
 
+        {freedomRadiusState !== null && (
+          <View style={styles.freedomRadius}>
+            <FreedomRadiusBadge state={freedomRadiusState} />
+          </View>
+        )}
+
+        {!model.isTerminal && (
+          <View style={styles.leaveQueue}>
+            <Pressable
+              onPress={confirmLeaveQueue}
+              disabled={isCancelling}
+              accessibilityRole="button"
+              accessibilityLabel="Leave queue"
+              hitSlop={8}
+            >
+              <Text style={[styles.leaveQueueLabel, isCancelling && styles.leaveQueueDisabled]}>
+                {isCancelling ? "Leaving…" : "Leave queue"}
+              </Text>
+            </Pressable>
+            {cancelError !== null && <Text style={styles.cancelError}>{cancelError}</Text>}
+          </View>
+        )}
+
         {model.isTerminal && (
           <View style={styles.doneButton}>
             <PrimaryButton label="Back to services" onPress={onDone} />
@@ -124,6 +192,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.xl,
     gap: spacing.sm,
+  },
+  topRow: {
+    width: "100%",
+    alignItems: "flex-end",
   },
   tokenNumber: {
     color: colors.text,
@@ -157,6 +229,29 @@ const styles = StyleSheet.create({
   subheadline: {
     color: colors.muted,
     fontSize: 16,
+  },
+  freedomRadius: {
+    marginTop: spacing.md,
+  },
+  leaveQueue: {
+    marginTop: spacing.lg,
+    alignItems: "center",
+    gap: spacing.xs,
+  },
+  leaveQueueLabel: {
+    color: colors.muted,
+    fontSize: 14,
+    fontWeight: "600",
+    textDecorationLine: "underline",
+    paddingVertical: spacing.xs,
+  },
+  leaveQueueDisabled: {
+    opacity: 0.5,
+  },
+  cancelError: {
+    color: colors.red,
+    fontSize: 13,
+    textAlign: "center",
   },
   doneButton: {
     marginTop: spacing.xl,
