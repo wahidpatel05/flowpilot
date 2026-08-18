@@ -545,6 +545,10 @@ export function projectFacility(
       averageServiceMinutes: projected.averageServiceMinutes,
       arrivalRatePerMinute: projected.arrivalRatePerMinute,
       downstreamArrivalRatePerMinute: projected.downstreamArrivalRatePerMinute,
+      // Carried so a simulated Health band matches the live one for the same
+      // wait. Without these, simulateFacility falls back to engine defaults.
+      healthyThresholdMinutes: projected.healthyThresholdMinutes,
+      criticalThresholdMinutes: projected.criticalThresholdMinutes,
     });
 
     queueSnapshots.push(

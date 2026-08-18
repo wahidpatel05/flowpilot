@@ -1107,3 +1107,37 @@ describe("projectTokenEta", () => {
     expect(projectTokenEta(projection, "rush-1")?.isSimulated).toBe(true);
   });
 });
+
+describe("projectFacility — carries Health thresholds into the engine", () => {
+  /**
+   * The Digital Twin renders "now" Health from the projection's Queue Snapshot
+   * and "forecast" Health from simulateFacility. Both must band the same wait
+   * value identically, which only holds if the projection hands each Service's
+   * own thresholds to the simulator.
+   */
+  it("populates each Service's thresholds on the engine's facility state", () => {
+    const projection = projectFacility(baseRows(), { now: NOW });
+
+    for (const state of projection.services) {
+      const detail = findProjectedService(projection, state.serviceId);
+      expect(state.healthyThresholdMinutes).toBe(detail?.healthyThresholdMinutes);
+      expect(state.criticalThresholdMinutes).toBe(detail?.criticalThresholdMinutes);
+    }
+  });
+
+  it("bands a zero-horizon forecast identically to the live snapshot", () => {
+    const projection = projectFacility(baseRows(), { now: NOW });
+    // Horizon 0 means "no time passes", so the simulated wait equals the live
+    // wait and the two Health bands must agree Service by Service.
+    const forecast = simulateFacility({
+      services: projection.services,
+      horizonMinutes: 0,
+    });
+
+    for (const simulated of forecast.services) {
+      const live = findQueueSnapshot(projection, simulated.serviceId);
+      expect(simulated.finalWaitMinutes).toBeCloseTo(live!.predictedWaitMinutes, 5);
+      expect(simulated.health).toBe(live!.health);
+    }
+  });
+});

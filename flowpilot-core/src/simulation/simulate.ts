@@ -64,6 +64,20 @@ function simulateService(
   const finalWaitMinutes =
     capacity > 0 ? queue / capacity : queue > 0 ? Number.POSITIVE_INFINITY : 0;
 
+  // Health uses this Service's own bands when they are known. Without this the
+  // simulated band would fall back to the engine defaults while the live band
+  // used the Service's configured thresholds, so one wait value could read
+  // `busy` now and `critical` in the forecast on the very same node.
+  const health = calculateQueueHealth({
+    predictedWaitMinutes: finalWaitMinutes,
+    ...(service.healthyThresholdMinutes !== undefined
+      ? { healthyThreshold: service.healthyThresholdMinutes }
+      : {}),
+    ...(service.criticalThresholdMinutes !== undefined
+      ? { criticalThreshold: service.criticalThresholdMinutes }
+      : {}),
+  });
+
   return {
     serviceId: service.serviceId,
     queueLengthByMinute,
@@ -71,7 +85,7 @@ function simulateService(
     peakQueueLength,
     finalWaitMinutes,
     personMinutesWaiting,
-    health: calculateQueueHealth({ predictedWaitMinutes: finalWaitMinutes }),
+    health,
   };
 }
 
