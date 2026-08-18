@@ -168,6 +168,23 @@ export default function DeskPage() {
 
   const combinedError = facilityError ?? catalogError ?? activeTokensError ?? incomingError;
 
+  /*
+   * A Counter is a physical desk with no Service of its own — the binding
+   * lives in counter_assignments and moves (ADR-0001), so this reads the
+   * current one off the projection every render rather than caching it.
+   */
+  const serviceNameForCounter = useCallback(
+    (counterId: string): string | null => {
+      if (projection === null) return null;
+      const boundServiceId = projection.counters.find(
+        (counter) => counter.counterId === counterId,
+      )?.serviceId;
+      if (boundServiceId === undefined) return null;
+      return findProjectedService(projection, boundServiceId)?.serviceName ?? null;
+    },
+    [projection],
+  );
+
   return (
     <div className="fp-canvas">
       <main className="fp-page fp-sheet">
@@ -189,6 +206,7 @@ export default function DeskPage() {
           counters={counters}
           selectedCounterId={selectedCounterId}
           onSelect={handleSelectCounter}
+          serviceNameForCounter={serviceNameForCounter}
         />
 
         <ActionFeedback feedback={feedback} />

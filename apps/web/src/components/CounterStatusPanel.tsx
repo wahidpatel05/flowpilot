@@ -1,4 +1,5 @@
 import type { CounterStatus } from "../lib/core";
+import { counterLabel } from "../lib/counterLabel";
 
 export function CounterStatusPanel({
   counterName,
@@ -14,13 +15,16 @@ export function CounterStatusPanel({
   onToggle: () => void;
 }) {
   const isActive = status === "active";
+  // Same wording as the picker, so the desk a clerk chose and the desk they
+  // are looking at are named identically.
+  const label = counterLabel({ counterName, serviceName });
 
   return (
     <div className="fp-card fp-desk-status-card">
       <div className="fp-card-head">
         <div>
-          <h2 className="fp-service-name">{counterName}</h2>
-          <p className="fp-service-slug">{serviceName ?? "Unassigned"}</p>
+          <h2 className="fp-service-name">{label.primary}</h2>
+          <p className="fp-service-slug">{label.secondary}</p>
         </div>
         <span className="fp-health" data-health={isActive ? "healthy" : "busy"}>
           <span className="fp-health-dot" aria-hidden="true" />

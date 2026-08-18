@@ -732,23 +732,140 @@ a {
   max-width: 340px;
 }
 
-.fp-desk-select {
-  background: var(--fp-surface);
-  border: var(--fp-stroke-width) solid var(--fp-stroke);
-  box-shadow: var(--fp-shadow-hard-sm);
-  color: var(--fp-text);
-  border-radius: var(--fp-radius-sm);
-  padding: 0.7rem 0.9rem;
-  font: inherit;
-  font-weight: 700;
-  cursor: pointer;
-  transition: box-shadow 160ms ease, transform 160ms ease;
+/* ---- Brutalist dropdown (custom listbox — see Select.tsx) ---- */
+
+.fp-select {
+  position: relative;
 }
 
-.fp-desk-select:focus-visible {
-  outline: none;
+.fp-select-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.6rem 0.6rem 0.6rem 0.95rem;
+  background: var(--fp-surface);
+  border: var(--fp-stroke-width) solid var(--fp-stroke);
+  border-radius: var(--fp-radius-sm);
   box-shadow: var(--fp-shadow-hard);
-  transform: translate(-1px, -1px);
+  font: inherit;
+  color: var(--fp-text);
+  text-align: left;
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.fp-select-trigger:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: var(--fp-shadow-hard-lg);
+}
+
+/* Open reads as pressed: the shadow collapses and the box sits down. */
+.fp-select-trigger[data-open="true"] {
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
+
+.fp-select-trigger:focus-visible {
+  outline: 3px solid var(--fp-purple);
+  outline-offset: 2px;
+}
+
+.fp-select-trigger[data-placeholder="true"] {
+  color: var(--fp-muted);
+  font-weight: 600;
+}
+
+.fp-select-value {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  min-width: 0;
+}
+
+.fp-select-primary {
+  font-weight: 800;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fp-select-secondary {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--fp-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* The chevron sits in its own outlined tile, like the reference's icon tiles. */
+.fp-select-chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  flex-shrink: 0;
+  border-radius: 0.45rem;
+  background: var(--fp-yellow);
+  border: var(--fp-stroke-width) solid var(--fp-stroke);
+  color: var(--fp-text);
+  transition: transform 200ms ease;
+}
+
+.fp-select-chevron svg {
+  width: 0.9rem;
+  height: 0.9rem;
+}
+
+.fp-select-trigger[data-open="true"] .fp-select-chevron {
+  transform: rotate(180deg);
+}
+
+.fp-select-list {
+  position: absolute;
+  z-index: 50;
+  top: calc(100% + 0.6rem);
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 0.3rem;
+  list-style: none;
+  max-height: 17rem;
+  overflow-y: auto;
+  background: var(--fp-surface);
+  border: var(--fp-stroke-width) solid var(--fp-stroke);
+  border-radius: var(--fp-radius-sm);
+  box-shadow: var(--fp-shadow-hard);
+  animation: fp-fade-in-up 160ms ease both;
+}
+
+.fp-select-option {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 0.45rem;
+  border: var(--fp-stroke-width) solid transparent;
+  cursor: pointer;
+}
+
+/* One highlight, driven by keyboard and pointer alike, so arrowing and
+   hovering can never disagree about which row is current. */
+.fp-select-option[data-active="true"] {
+  background: var(--fp-yellow);
+  border-color: var(--fp-stroke);
+}
+
+.fp-select-option[aria-selected="true"] .fp-select-primary::after {
+  content: " ✓";
+  font-weight: 900;
+}
+
+.fp-select-option[data-active="true"] .fp-select-secondary {
+  color: var(--fp-text);
 }
 
 .fp-desk-layout {
