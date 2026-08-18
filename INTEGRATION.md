@@ -122,6 +122,17 @@ subscription fires, and the ETA roughly halves (about 37 min → 18 min on the s
 prints its own Visitor's Token number and both ETAs so you can compare against what the phone shows.
 Runs are repeatable; the script's own Token numbers start `E-GP` so its artefacts are obvious.
 
+## The web app runs on webpack, not Turbopack — do not "fix" this
+
+`apps/web` is a Next.js 16 app. Next 16 defaults `next dev`/`next build` to Turbopack, but Turbopack
+refuses to resolve files outside its project root (`apps/web`), and `flowpilot-core` lives one level
+up. `package.json`'s `dev`/`build` scripts pass `--webpack` explicitly for this reason, and
+`next.config.ts` adds a `resolve.extensionAlias` so webpack follows flowpilot-core's internal
+`./foo.js` imports to the sibling `foo.ts` file — the NodeNext convention `tsc` already understands
+natively. If you remove `--webpack` "to modernise it," the build will fail to resolve the shared
+engine. This is revisited only if flowpilot-core ever gets its own build step and becomes a real
+published/symlinked package.
+
 ## Environment variables — copy these names exactly
 
 This project uses Supabase's **new** key format. The variable is `*_PUBLISHABLE_KEY`, **not**
