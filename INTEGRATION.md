@@ -116,11 +116,28 @@ comes from `projectTokenEta`.
 
 **Android team: this is your unblocker.** Your signature moment is the ETA dropping on the phone,
 which requires a real Intervention to be applied. Run this script on demand and it fires one — no
-Control, no web UI, no manager clicking anything. Join the same queue on the phone first, keep the
-token screen open, then run the script: `counter_assignments` gains a row for Examination Cell, your
-subscription fires, and the ETA roughly halves (about 37 min → 18 min on the seeded data). The script
-prints its own Visitor's Token number and both ETAs so you can compare against what the phone shows.
-Runs are repeatable; the script's own Token numbers start `E-GP` so its artefacts are obvious.
+Control, no web UI, no manager clicking anything.
+
+**Do not join on the phone before running this script.** Step 1 of the script is `reset_demo()`,
+and `reset_demo()`'s own `DELETE` has no `service_id` or `is_simulated` filter narrowing it to the
+script's synthetic data — it removes *every* non-completed Token facility-wide (`WHERE status <>
+'completed' OR is_simulated`), including a real Visitor's just-joined `waiting` Token. Verified
+directly against the live project: insert a real Token, call `reset_demo()`, the Token is gone.
+Joining first and then running the script deletes the phone's Token before the Intervention is
+even computed, not "the ETA roughly halves" as this section previously (and wrongly) claimed.
+
+To watch a real Token's ETA drop without Control, fire the same RPC sequence the script uses
+(`recommendIntervention()` → insert `recommendations` → `approve_recommendation()` →
+`accept_intervention()` → `apply_intervention()`) against the **current** live baseline, with no
+surrounding `reset_demo()` call. `apply_intervention()` changes `counter_assignments` for
+Examination Cell, which affects every Token already queued there — including a phone Token joined
+beforehand — regardless of who requested the Intervention. `flowpilot-visitor`'s A3 work
+(the ETA-improvement moment) verifies against exactly this, not against the full golden-path script.
+
+Running the full golden-path script is still worthwhile to confirm the closed loop itself: reset →
+its own synthetic Visitor joins Examination Cell → capture their ETA → Simulate Rush → apply an
+Intervention → **assert that Visitor's recomputed ETA is strictly lower** → reset. Its own Token
+numbers start `E-GP`, so its artefacts are obvious — just don't expect a phone Token to survive it.
 
 ## The web app runs on webpack, not Turbopack — do not "fix" this
 
