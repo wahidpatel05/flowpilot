@@ -14,6 +14,7 @@ Read this before writing a line on the website or the Android app. Three teams, 
 | Estimated Time Returned | `flowpilot-core/src/metrics/` | backend/intelligence |
 | Schema + seed + demo fns | `supabase/` | backend/intelligence |
 | Vocabulary | `CONTEXT.md` | everyone |
+| Expo Visitor app | `flowpilot-visitor/` | Android |
 
 `flowpilot-core` is pure TypeScript with **zero dependencies** — no Supabase, no React, no I/O.
 Both the website and the Android app import it directly. Copy the folder in if npm-linking across

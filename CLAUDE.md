@@ -12,6 +12,8 @@ route — see `docs/adr/0004-insurance-grade-visitor-pwa.md`.
   deliberately override the spec sheet.
 - **`flowpilot-core/src/types.ts`** — frozen domain contracts. Never reimplement the engine; never invent
   a status string.
+- **`flowpilot-visitor/AGENTS.md`** — the Expo Visitor app: how `@flowpilot/core` is aliased into Metro,
+  and why `EXPO_PUBLIC_*` must be read literally.
 
 ## Agent skills
 
