@@ -40,7 +40,7 @@ repos costs you more than 5 minutes; just never edit your copy.
 The demo is one causal chain. Each arrow is an owner boundary, and an unowned arrow is a dead demo.
 
 ```
-Visitor joins            → Visitor surface  writes  tokens
+Visitor joins            → Android          writes  tokens
 Control sees it          → Control          subscribes  tokens
 Simulate Rush            → Control          calls  simulate_rush()
 Forecast + Digital Twin  → Control          calls  simulateFacility()
@@ -49,7 +49,7 @@ Manager approves         → Control          rpc  approve_recommendation()
 Desk receives            → Desk             subscribes  interventions
 Staff accepts            → Desk             rpc  accept_intervention()
 CAPACITY ACTUALLY CHANGES→ POSTGRES        rpc  apply_intervention()  ← THE KEYSTONE
-Visitor ETA drops        → Visitor surface  subscribes  counter_assignments, recomputes ETA
+Visitor ETA drops        → Android          subscribes  counter_assignments, recomputes ETA
 Time returned rises      → Control          reads  interventions
 Timeline explains        → Control          subscribes  intervention_events
 ```

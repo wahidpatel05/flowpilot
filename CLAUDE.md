@@ -2,7 +2,7 @@
 
 A closed-loop queue orchestration platform for physical waiting. Built across three teams:
 backend/intelligence (this repo's `flowpilot-core` + `supabase`), the website (Control + Desk),
-and the Android app (FlowPilot Visitor).
+and the Android app (FlowPilot Visitor). There is no Visitor PWA — see `docs/adr/0003-no-visitor-pwa.md`.
 
 ## Read before you build
 
