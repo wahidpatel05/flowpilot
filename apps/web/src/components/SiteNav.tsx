@@ -22,9 +22,9 @@ export function SiteNav() {
     <nav className="fp-nav" aria-label="Primary">
       <Link href="/" className="fp-nav-brand">
         <span className="fp-nav-mark" aria-hidden="true">
-          F
+          D
         </span>
-        FlowPilot
+        DeQueue
       </Link>
 
       <div className="fp-nav-links">

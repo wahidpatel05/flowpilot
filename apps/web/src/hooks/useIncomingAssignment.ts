@@ -17,7 +17,7 @@ import {
 const POLL_INTERVAL_MS = 10_000;
 
 /**
- * The temporary Assignment FlowPilot wants to move onto this Counter, if any —
+ * The temporary Assignment DeQueue wants to move onto this Counter, if any —
  * the consent step CONTEXT.md requires before it can touch a real Counter.
  *
  * `interventions.action_payload` is JSONB, so `postgres_changes` cannot filter
@@ -61,7 +61,7 @@ export function useIncomingAssignment(counterId: string | null): {
       if (!isMounted || requestId !== latestRequestId.current) return;
 
       if (fetchError !== null) {
-        setError(`FlowPilot: failed to read incoming assignments — ${fetchError.message}`);
+        setError(`DeQueue: failed to read incoming assignments — ${fetchError.message}`);
         return;
       }
 

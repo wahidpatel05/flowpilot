@@ -30,7 +30,7 @@ export async function joinQueue(
     .single();
 
   if (error !== null) {
-    throw new Error(`FlowPilot: could not join the queue — ${error.message}`);
+    throw new Error(`DeQueue: could not join the queue — ${error.message}`);
   }
 
   return {

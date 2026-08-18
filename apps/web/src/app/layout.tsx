@@ -3,7 +3,7 @@ import "./globals.css";
 import { SiteNav } from "../components/SiteNav";
 
 export const metadata: Metadata = {
-  title: "FlowPilot",
+  title: "DeQueue",
   description: "Closed-loop AI orchestration for physical waiting.",
 };
 

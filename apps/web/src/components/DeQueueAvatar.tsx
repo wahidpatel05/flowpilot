@@ -18,13 +18,13 @@ const MOOD: Record<AvatarMood, MoodConfig> = {
 };
 
 /**
- * FlowPilot's assistant avatar — the face the engine wears while it decides.
+ * DeQueue's assistant avatar — the face the engine wears while it decides.
  * Never speaks for the engine (Gemini never scores an Intervention); it only
  * reflects state the app already knows: generating a Recommendation, one
  * ready to review, a Service turning critical, an RPC failing, an approval
  * landing.
  */
-export function FlowPilotAvatar({
+export function DeQueueAvatar({
   mood,
   size = 40,
 }: {

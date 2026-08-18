@@ -76,7 +76,7 @@ export default function DeskPage() {
       } catch (err) {
         showFeedback(
           "error",
-          err instanceof Error ? err.message : "FlowPilot: something went wrong.",
+          err instanceof Error ? err.message : "DeQueue: something went wrong.",
         );
       } finally {
         setBusy(false);

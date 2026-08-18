@@ -79,7 +79,7 @@ export function useVisitorQueue(): VisitorQueue {
     } catch (err) {
       if (!isMounted.current || requestId !== latestRequestId.current) return;
       setError(
-        err instanceof Error ? err.message : "FlowPilot: failed to load the queue.",
+        err instanceof Error ? err.message : "DeQueue: failed to load the queue.",
       );
     }
   });
@@ -157,7 +157,7 @@ export function useVisitorQueue(): VisitorQueue {
       } catch (err) {
         if (!isMounted.current) return;
         setError(
-          err instanceof Error ? err.message : "FlowPilot: could not join the queue.",
+          err instanceof Error ? err.message : "DeQueue: could not join the queue.",
         );
       } finally {
         if (isMounted.current) setIsJoining(false);

@@ -2,7 +2,7 @@
  * The Visitor's Supabase client.
  *
  * The publishable key is designed to ship inside a client bundle — that is what
- * it is for, and no service-role key belongs anywhere in FlowPilot. A Visitor
+ * it is for, and no service-role key belongs anywhere in DeQueue. A Visitor
  * never has an account, so sessions are switched off entirely; that also spares
  * the app an AsyncStorage dependency it would otherwise need only for auth.
  */

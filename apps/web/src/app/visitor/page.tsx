@@ -27,7 +27,7 @@ export default function VisitorPage() {
   return (
     <main className="fp-visitor-page">
       <header className="fp-visitor-header">
-        <h1 className="fp-visitor-title">FlowPilot</h1>
+        <h1 className="fp-visitor-title">DeQueue</h1>
         <p className="fp-visitor-subtitle">
           {session === null
             ? "Pick a service, join the queue, watch your wait drop."

@@ -51,7 +51,7 @@ export async function fetchFacilityRows(): Promise<FacilityRows> {
     flowEdgesRes,
   ]) {
     if (res.error) {
-      throw new Error(`FlowPilot: failed to read facility rows — ${res.error.message}`);
+      throw new Error(`DeQueue: failed to read facility rows — ${res.error.message}`);
     }
   }
 

@@ -1,5 +1,5 @@
 /**
- * FlowPilot Visitor design tokens — from the Visitor design system.
+ * DeQueue Visitor design tokens — from the Visitor design system.
  *
  * Warm cream ground, white cards, yellow primary, friendly and light. This is
  * deliberately NOT Control's dark command-centre palette: Control is read

@@ -1,5 +1,5 @@
 /**
- * The design's status indicator, in FlowPilot's vocabulary: a coloured dot
+ * The design's status indicator, in DeQueue's vocabulary: a coloured dot
  * beside the Health word.
  *
  * The word is what makes this work — colour alone would leave a colour-blind

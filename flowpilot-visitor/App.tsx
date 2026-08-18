@@ -1,9 +1,9 @@
 /**
- * FlowPilot Visitor.
+ * DeQueue Visitor.
  *
  * Two surfaces, deliberately: the Service catalogue, and the Live Token screen
  * for whichever Token the Visitor currently holds. This app is the Visitor's
- * view of the facility, never all of FlowPilot on a phone — no router library
+ * view of the facility, never all of DeQueue on a phone — no router library
  * is pulled in for two screens and one direction of travel.
  */
 import { useCallback, useEffect, useState } from "react";

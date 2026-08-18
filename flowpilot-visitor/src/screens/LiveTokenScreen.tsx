@@ -1,5 +1,5 @@
 /**
- * FlowPilot Visitor — Live Token.
+ * DeQueue Visitor — Live Token.
  *
  * The heart of the Visitor experience: Token number, then the one number that
  * matters, above the fold, updating with no interaction as capacity or the

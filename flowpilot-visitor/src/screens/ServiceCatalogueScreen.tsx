@@ -1,5 +1,5 @@
 /**
- * FlowPilot Visitor — home.
+ * DeQueue Visitor — home.
  *
  * Asks the Visitor what they need, then answers it with every Service and its
  * current wait, queue and Health, and a one-tap way to join. This is the whole
@@ -47,7 +47,7 @@ export function ServiceCatalogueScreen({
         ItemSeparatorComponent={() => <View style={{ height: spacing.md }} />}
         ListHeaderComponent={
           <View style={styles.header}>
-            <Text style={styles.eyebrow}>FlowPilot</Text>
+            <Text style={styles.eyebrow}>DeQueue</Text>
             <Text style={styles.question}>What do you need today?</Text>
             <Text style={styles.subtitle}>
               Live waits across the facility. Pull down to refresh.

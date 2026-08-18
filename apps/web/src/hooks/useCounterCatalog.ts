@@ -31,7 +31,7 @@ export function useCounterCatalog(): { counters: CounterCatalogEntry[]; error: s
       if (!isMounted) return;
 
       if (fetchError !== null) {
-        setError(`FlowPilot: failed to read counters — ${fetchError.message}`);
+        setError(`DeQueue: failed to read counters — ${fetchError.message}`);
         return;
       }
 

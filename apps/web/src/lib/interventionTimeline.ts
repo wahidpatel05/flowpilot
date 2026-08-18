@@ -2,7 +2,7 @@
  * The timeline: the causal chain of one facility's Interventions, in the order
  * it actually happened.
  *
- * This is the trust feature. It is what lets a Manager explain FlowPilot's
+ * This is the trust feature. It is what lets a Manager explain DeQueue's
  * reasoning to somebody else, so every entry carries a real timestamp written
  * by Postgres — nothing here fabricates one, and nothing here invents an event
  * that was not recorded.
@@ -86,12 +86,12 @@ const EVENT_TONE: Readonly<Record<string, TimelineTone>> = {
 
 /**
  * What each event means when the row carries no message of its own. Prose, in
- * FlowPilot's vocabulary, so a fallback entry still reads like a sentence a
+ * DeQueue's vocabulary, so a fallback entry still reads like a sentence a
  * human wrote.
  */
 const EVENT_FALLBACK_MESSAGE: Readonly<Record<string, string>> = {
   forecast_triggered: "The forecast flagged pressure building at a Service.",
-  recommendation_created: "FlowPilot proposed a capacity change.",
+  recommendation_created: "DeQueue proposed a capacity change.",
   approved: "The manager approved this Intervention.",
   staff_notified: "The staff member was asked to confirm the move.",
   staff_accepted: "The staff member accepted the move.",
@@ -101,7 +101,7 @@ const EVENT_FALLBACK_MESSAGE: Readonly<Record<string, string>> = {
   rejected: "The manager rejected this Recommendation.",
 };
 
-const GENERIC_FALLBACK_MESSAGE = "FlowPilot recorded a step in this Intervention.";
+const GENERIC_FALLBACK_MESSAGE = "DeQueue recorded a step in this Intervention.";
 
 /**
  * A raw uuid in a timeline entry is a bug, not a display choice: the whole

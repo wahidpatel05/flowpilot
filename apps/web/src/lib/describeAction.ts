@@ -40,7 +40,7 @@ function nameParties(row: ActionShape, names: PartyNames): NamedParties {
   };
 }
 
-/** Imperative — what FlowPilot is asking the Manager to authorise. */
+/** Imperative — what DeQueue is asking the Manager to authorise. */
 export function describeMove(row: ActionShape, names: PartyNames): string {
   const p = nameParties(row, names);
   if (row.action_type === "activate_counter") {

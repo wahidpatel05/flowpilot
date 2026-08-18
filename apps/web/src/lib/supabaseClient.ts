@@ -5,7 +5,7 @@ const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
 if (!url || !publishableKey) {
   throw new Error(
-    "FlowPilot: missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY. " +
+    "DeQueue: missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY. " +
       "Note the variable is *_PUBLISHABLE_KEY, not *_ANON_KEY — see .env.example.",
   );
 }

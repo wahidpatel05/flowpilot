@@ -7,7 +7,7 @@ import {
 
 /**
  * The timeline — the trust feature. It is what lets a Manager explain
- * FlowPilot's reasoning to somebody else, so every row is an event the database
+ * DeQueue's reasoning to somebody else, so every row is an event the database
  * actually recorded, at the instant Postgres stamped it, in the prose Postgres
  * wrote. This component orders nothing and phrases nothing: `buildTimeline`
  * already ordered by timestamp AND lifecycle sequence, which is what keeps

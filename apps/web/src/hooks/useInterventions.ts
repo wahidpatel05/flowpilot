@@ -117,7 +117,7 @@ export function useInterventions(
 
     const failure = interventionsRes.error ?? eventsRes.error;
     if (failure !== null) {
-      setReadError(`FlowPilot: failed to read the Interventions — ${failure.message}`);
+      setReadError(`DeQueue: failed to read the Interventions — ${failure.message}`);
       return;
     }
 

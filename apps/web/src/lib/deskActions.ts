@@ -29,11 +29,11 @@ async function transitionToken(
     .select("id");
 
   if (error !== null) {
-    throw new Error(`FlowPilot: could not update the token — ${error.message}`);
+    throw new Error(`DeQueue: could not update the token — ${error.message}`);
   }
   if ((data ?? []).length === 0) {
     throw new Error(
-      "FlowPilot: that token has already moved on — someone else may have actioned it first.",
+      "DeQueue: that token has already moved on — someone else may have actioned it first.",
     );
   }
 }
@@ -65,7 +65,7 @@ export async function setCounterActive(counterId: string, active: boolean): Prom
 }
 
 /**
- * The Staff member's consent step (CONTEXT.md: FlowPilot may never silently
+ * The Staff member's consent step (CONTEXT.md: DeQueue may never silently
  * move a human). Desk is a valid caller of `apply_intervention()` per
  * INTEGRATION.md's RPC table, and applying immediately after accepting is
  * what makes "the Staff member's queue then reflects the new Service" true

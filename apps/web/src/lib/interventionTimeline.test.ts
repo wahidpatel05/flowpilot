@@ -160,7 +160,7 @@ describe("timelineMessage", () => {
 
   it("still says something for an event type it has never seen", () => {
     expect(timelineMessage(event({ event_type: "queue_drained_early", message: null }))).toBe(
-      "FlowPilot recorded a step in this Intervention.",
+      "DeQueue recorded a step in this Intervention.",
     );
   });
 });

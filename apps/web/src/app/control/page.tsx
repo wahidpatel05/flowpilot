@@ -22,7 +22,7 @@ import { CriticalCallout } from "../../components/CriticalCallout";
 import { FacilityTotals } from "../../components/FacilityTotals";
 import { DemoControls } from "../../components/DemoControls";
 import { RecommendationCard } from "../../components/RecommendationCard";
-import { FlowPilotAvatar } from "../../components/FlowPilotAvatar";
+import { DeQueueAvatar } from "../../components/DeQueueAvatar";
 import { ToastStack } from "../../components/ToastStack";
 import { EtaImprovementBadge } from "../../components/EtaImprovementBadge";
 import { LiveQueuePanel } from "../../components/LiveQueuePanel";
@@ -115,9 +115,9 @@ export default function ControlPage() {
       <div className="fp-control-sheet">
         <header className="fp-control-header">
           <div className="fp-control-header-left">
-            <FlowPilotAvatar mood={avatarMood} />
+            <DeQueueAvatar mood={avatarMood} />
             <div>
-              <h1 className="fp-title">FlowPilot Control</h1>
+              <h1 className="fp-title">DeQueue Control</h1>
               <p className="fp-subtitle">Facility operations · MHSSCE Student Services</p>
             </div>
           </div>

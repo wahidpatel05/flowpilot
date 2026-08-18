@@ -139,7 +139,7 @@ export function useLiveFacility(): LiveFacility {
       setError(null);
     } catch (err) {
       if (!isMounted.current || requestId !== latestRequestId.current) return;
-      setError(err instanceof Error ? err.message : "FlowPilot: failed to load the facility.");
+      setError(err instanceof Error ? err.message : "DeQueue: failed to load the facility.");
     }
   });
 

@@ -65,7 +65,7 @@ export function useActiveCounterTokens(serviceId: string | null): ActiveCounterT
       if (!isMounted || requestId !== latestRequestId.current) return;
 
       if (fetchError !== null) {
-        setError(`FlowPilot: failed to read the counter's tokens — ${fetchError.message}`);
+        setError(`DeQueue: failed to read the counter's tokens — ${fetchError.message}`);
         return;
       }
       setError(null);

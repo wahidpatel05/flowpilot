@@ -5,7 +5,7 @@
  * Narrow on purpose. It does not need staff, skills or the Flow Graph, which
  * belong to Control's forecast. Selecting only what is rendered keeps the
  * payload small on hackathon wifi and keeps the app honestly scoped to
- * FlowPilot Visitor.
+ * DeQueue Visitor.
  *
  * These rows are never interpreted here — they go straight to projectFacility.
  *

@@ -1,4 +1,4 @@
-import type { AvatarMood } from "../components/FlowPilotAvatar";
+import type { AvatarMood } from "../components/DeQueueAvatar";
 
 export interface AvatarMoodInput {
   actionError: string | null;

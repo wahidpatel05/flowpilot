@@ -75,7 +75,7 @@ export function useRecommendation(
       .limit(1);
 
     if (error !== null) {
-      setActionError(`FlowPilot: failed to read the Recommendation — ${error.message}`);
+      setActionError(`DeQueue: failed to read the Recommendation — ${error.message}`);
       return;
     }
     setActionError(null);
@@ -137,7 +137,7 @@ export function useRecommendation(
         });
 
         if (error !== null) {
-          const msg = `FlowPilot: failed to persist the Recommendation — ${error.message}`;
+          const msg = `DeQueue: failed to persist the Recommendation — ${error.message}`;
           setActionError(msg);
           notifyRef.current.push("error", "Couldn't save the Recommendation", error.message);
           return;

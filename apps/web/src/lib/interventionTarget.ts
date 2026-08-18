@@ -45,7 +45,7 @@ function payloadCounterId(row: InterventionRow): string | undefined {
 
 /**
  * The Intervention this Counter should surface as an incoming Assignment, if
- * any — the one FlowPilot is not allowed to apply without this Staff member's
+ * any — the one DeQueue is not allowed to apply without this Staff member's
  * consent. Picks the most recently created match; there should only ever be
  * one live at a time, but this stays well-defined if that invariant slips.
  */
