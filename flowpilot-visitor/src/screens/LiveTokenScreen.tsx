@@ -4,12 +4,22 @@
  * The heart of the Visitor experience: Token number, then the one number that
  * matters, above the fold, updating with no interaction as capacity or the
  * queue ahead changes. See useLiveToken for what "no interaction" is built on.
+ *
+ * The improvement moment (A3) hangs off one value from that hook, `improvedAt`:
+ * EtaHeadline plays the number crossfade, ImprovementBanner plays the "wait
+ * just got shorter" message, and the effect below fires the success haptic —
+ * three independent reactions to the same trigger, so a haptic failure (no
+ * hardware support, permissions, web) can never block the other two.
  */
+import { useEffect, useRef } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import * as Haptics from "expo-haptics";
 import { StateMessage } from "../components/StateMessage";
 import { HealthIndicator } from "../components/HealthIndicator";
 import { PrimaryButton } from "../components/PrimaryButton";
+import { EtaHeadline } from "../components/EtaHeadline";
+import { ImprovementBanner } from "../components/ImprovementBanner";
 import { useLiveToken } from "../token/useLiveToken";
 import { colors, spacing } from "../theme";
 
@@ -25,7 +35,22 @@ export function LiveTokenScreen({
   serviceNameHint,
   onDone,
 }: LiveTokenScreenProps) {
-  const { model, isLoading, error, notFound } = useLiveToken(tokenId, serviceNameHint);
+  const { model, isLoading, error, notFound, improvedAt } = useLiveToken(
+    tokenId,
+    serviceNameHint,
+  );
+
+  // Independent of the visual pieces: if haptics are unavailable (no
+  // hardware, permissions, running on web), the crossfade and banner still
+  // fire — the AC's explicit fallback.
+  const lastHapticKeyRef = useRef<number | null>(improvedAt);
+  useEffect(() => {
+    if (improvedAt === null || improvedAt === lastHapticKeyRef.current) return;
+    lastHapticKeyRef.current = improvedAt;
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {
+      // Non-fatal — see the file-level comment.
+    });
+  }, [improvedAt]);
 
   if (notFound) {
     // A stale local pointer — e.g. reset_demo() ran. Nothing to show; leave
@@ -59,12 +84,15 @@ export function LiveTokenScreen({
         <Text style={styles.serviceName}>{model.serviceName}</Text>
 
         <View style={styles.readout}>
-          <Text style={styles.headline} numberOfLines={1} adjustsFontSizeToFit>
-            {model.headline}
-          </Text>
+          <EtaHeadline
+            value={model.headline}
+            transitionKey={improvedAt}
+            style={styles.headline}
+          />
           {model.subheadline !== "" && (
             <Text style={styles.subheadline}>{model.subheadline}</Text>
           )}
+          <ImprovementBanner triggerKey={improvedAt} />
         </View>
 
         {model.health !== null && model.healthLabel !== null && (

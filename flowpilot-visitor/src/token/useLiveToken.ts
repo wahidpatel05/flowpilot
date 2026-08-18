@@ -24,6 +24,7 @@ import type { TokenRow } from "@flowpilot/core";
 import { fetchServiceQueueRows } from "../facility/fetchServiceQueueRows";
 import { fetchTokenRow } from "../facility/fetchTokenRow";
 import { getSupabaseClient } from "../supabase";
+import { didEtaImprove } from "./improvementMoment";
 import { buildLiveTokenModel, type LiveTokenModel } from "./tokenPresentation";
 
 /** Coalesces a burst of realtime events (e.g. Simulate Rush) into one refetch. */
@@ -37,6 +38,12 @@ export interface LiveTokenState {
   error: string | null;
   /** TRUE when the Token row is gone — a stale pointer, e.g. after reset_demo(). */
   notFound: boolean;
+  /**
+   * Set to Date.now() the moment `didEtaImprove` fires, else carried forward
+   * unchanged — so a screen can useEffect on this value to play the
+   * improvement moment exactly once per improvement, not once per render.
+   */
+  improvedAt: number | null;
 }
 
 export function useLiveToken(
@@ -48,6 +55,7 @@ export function useLiveToken(
     isLoading: true,
     error: null,
     notFound: false,
+    improvedAt: null,
   });
 
   useEffect(() => {
@@ -55,6 +63,8 @@ export function useLiveToken(
     let debounceHandle: ReturnType<typeof setTimeout> | undefined;
     let channels: RealtimeChannel[] = [];
     let cancelled = false;
+    // Reset per Token — a new Token shouldn't inherit a stale celebration.
+    let previousModel: LiveTokenModel | null = null;
 
     // Position and ETA are only meaningful while still queueing; every other
     // status is a fixed message tokenPresentation renders without a
@@ -109,13 +119,27 @@ export function useLiveToken(
         const token = await fetchTokenRow(client, tokenId);
         if (cancelled) return;
         if (token === null) {
-          setState({ model: null, isLoading: false, error: null, notFound: true });
+          setState((previous) => ({
+            model: null,
+            isLoading: false,
+            error: null,
+            notFound: true,
+            improvedAt: previous.improvedAt,
+          }));
           return;
         }
         if (channels.length === 0) subscribeToService(token.service_id);
         const model = await buildModelFor(token);
         if (cancelled) return;
-        setState({ model, isLoading: false, error: null, notFound: false });
+        const improved = didEtaImprove(previousModel, model);
+        previousModel = model;
+        setState((previous) => ({
+          model,
+          isLoading: false,
+          error: null,
+          notFound: false,
+          improvedAt: improved ? Date.now() : previous.improvedAt,
+        }));
       } catch (caught) {
         if (cancelled) return;
         setState((previous) => ({
