@@ -158,6 +158,7 @@ service-role key is needed anywhere in FlowPilot.
 | `apply_intervention(id)` | Control or Desk | **Changes capacity for real.** Atomic, skill-checked |
 | `reject_recommendation(id, reason)` | Control | Status `rejected`, logged to the timeline |
 | `expire_temporary_assignments()` | Any | Ends temporary assignments past `ends_at` |
+| `set_counter_active(counter_id, active)` | Desk | Ends/resumes a Counter's own primary Assignment in place — not an Intervention |
 
 Every one is `security definer` and granted to `anon`, so call them with `supabase.rpc('name', {...})`
 using the publishable key. They raise `P0001` with a human-readable message on invalid state — surface

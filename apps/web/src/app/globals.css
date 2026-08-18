@@ -225,6 +225,125 @@ a {
   text-align: center;
 }
 
+/* ------------------------------------------------------------------ *
+ * Desk
+ * ------------------------------------------------------------------ */
+
+.fp-desk-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 1.5rem;
+  max-width: 320px;
+}
+
+.fp-desk-select {
+  background: var(--fp-surface);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--fp-text);
+  border-radius: 0.6rem;
+  padding: 0.75rem 0.9rem;
+  font-size: 1rem;
+}
+
+.fp-desk-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.fp-desk-status-card {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.fp-desk-now-serving {
+  align-items: flex-start;
+}
+
+.fp-desk-token-number {
+  font-size: 2.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.fp-desk-up-next {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 1.1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.fp-desk-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.75rem;
+}
+
+.fp-desk-button {
+  min-height: 4.5rem;
+  border-radius: 0.9rem;
+  border: none;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--fp-bg);
+  background: var(--fp-mint);
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.fp-desk-button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.fp-desk-button-secondary {
+  background: var(--fp-cyan);
+  min-height: 3.25rem;
+}
+
+.fp-desk-button-danger {
+  background: var(--fp-coral);
+}
+
+.fp-desk-button-accent {
+  background: var(--fp-amber);
+}
+
+.fp-desk-incoming {
+  border-color: rgba(255, 181, 71, 0.5);
+  background: rgba(255, 181, 71, 0.08);
+}
+
+.fp-desk-incoming-message {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.fp-desk-feedback {
+  padding: 1rem 1.25rem;
+  border-radius: 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.fp-desk-feedback[data-type="success"] {
+  color: var(--fp-mint);
+  background: rgba(102, 242, 179, 0.12);
+  border: 1px solid rgba(102, 242, 179, 0.4);
+}
+
+.fp-desk-feedback[data-type="error"] {
+  color: var(--fp-coral);
+  background: rgba(255, 98, 107, 0.1);
+  border: 1px solid rgba(255, 98, 107, 0.4);
+}
+
 /* ---------------------------------------------------------------------
  * Visitor PWA — softer companion theme (docs/adr/0004). Same mint identity
  * as Control, lighter surfaces and rounder shapes because this runs in a
