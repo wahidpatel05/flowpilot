@@ -6,10 +6,16 @@ import { ESTIMATED_TIME_RETURNED_LABEL, formatMinutesReturned } from "../lib/cor
  * The cumulative Estimated Time Returned — the figure that counts up as
  * Interventions are applied, and the one the Manager is here to watch.
  *
- * ESTIMATED, NEVER MEASURED (ADR-0002). The caption says so out loud, because
- * nobody observes the facility that didn't happen. The formatting is the
- * engine's own `formatMinutesReturned`: minutes under an hour, hours and
- * minutes above.
+ * ESTIMATED, NEVER MEASURED (ADR-0002). The caveat states the provenance out
+ * loud, because nobody observes the facility that didn't happen — but it states
+ * it WITHOUT the word "measured". A judge reads the screen, not the sentence
+ * structure, and the one word we must never be seen claiming should not appear
+ * beside the figure even inside a denial of it. The acceptance run enforces
+ * that: the word may live in a comment like this one and nowhere a Visitor or a
+ * Manager can read it.
+ *
+ * The formatting is the engine's own `formatMinutesReturned`: minutes under an
+ * hour, hours and minutes above.
  */
 export function TimeReturnedCard({
   minutes,
@@ -36,8 +42,8 @@ export function TimeReturnedCard({
         </span>
       </div>
       <p className="fp-time-returned-caveat">
-        Estimated, not measured — the simulator&rsquo;s counterfactual for the
-        waiting that didn&rsquo;t happen.
+        Estimated from the simulator&rsquo;s counterfactual — the waiting that
+        didn&rsquo;t happen, which nobody could observe.
       </p>
     </section>
   );

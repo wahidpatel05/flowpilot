@@ -2,6 +2,7 @@ import type { ProjectedTokenEta } from "../../lib/core";
 import type { ConnectionState } from "../../lib/connectionState";
 import { formatWaitMinutes } from "../../lib/formatMinutes";
 import { ConnectionBadge } from "../ConnectionBadge";
+import { SimulatedTag } from "../SimulatedTag";
 
 /**
  * The Visitor's own Token: number, ETA (the dominant number) and people
@@ -67,7 +68,9 @@ export function TokenPanel({
       </div>
 
       {eta.isSimulated ? (
-        <p className="fp-cold-start">Simulated demo token</p>
+        <p>
+          <SimulatedTag detail="demo token" />
+        </p>
       ) : null}
 
       <button type="button" className="fp-visitor-leave" onClick={onLeave}>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { ActiveToken } from "../hooks/useActiveCounterTokens";
 import { formatElapsedMinutes } from "../lib/elapsed";
+import { SimulatedTag } from "./SimulatedTag";
 
 /** Ticks once a second so the elapsed clock moves without a refetch. */
 function useNow(): number {
@@ -31,6 +32,7 @@ export function NowServing({
         <span className="fp-desk-token-number" key={servingToken.tokenNumber}>
           {servingToken.tokenNumber}
         </span>
+        {servingToken.isSimulated ? <SimulatedTag detail="Visitor (Simulate Rush)" /> : null}
         <span className="fp-metric-value" data-emphasis="wait">
           {formatElapsedMinutes(servingToken.startedAtMillis, now)}
           <span className="fp-metric-unit">elapsed</span>
@@ -46,6 +48,7 @@ export function NowServing({
         <span className="fp-desk-token-number" key={calledToken.tokenNumber}>
           {calledToken.tokenNumber}
         </span>
+        {calledToken.isSimulated ? <SimulatedTag detail="Visitor (Simulate Rush)" /> : null}
       </div>
     );
   }

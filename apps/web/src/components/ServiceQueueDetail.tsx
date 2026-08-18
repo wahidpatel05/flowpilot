@@ -4,6 +4,7 @@ import type { ControlServiceNode } from "../lib/controlViewModel";
 import { formatWaitMinutes } from "../lib/formatMinutes";
 import { Modal } from "./Modal";
 import { StatusPill } from "./StatusPill";
+import { SimulatedTag } from "./SimulatedTag";
 
 /** `waiting` and `called` are the only two statuses still in line. */
 const QUEUE_STATUS_LABEL: Readonly<Record<string, string>> = {
@@ -111,7 +112,7 @@ export function ServiceQueueDetail({
                   <span className="fp-queue-detail-token">
                     {entry.tokenNumber}
                     {entry.isSimulated ? (
-                      <span className="fp-predicted-tag">Simulated</span>
+                      <SimulatedTag className="fp-predicted-tag" />
                     ) : null}
                   </span>
                   <span className="fp-queue-detail-status">

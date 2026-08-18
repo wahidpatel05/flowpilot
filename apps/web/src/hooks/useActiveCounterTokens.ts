@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import {
+  selectActiveTokens,
+  type ActiveToken,
+  type ActiveTokenRow,
+} from "../lib/activeCounterTokens";
 import { supabase } from "../lib/supabaseClient";
 
-export interface ActiveToken {
-  id: string;
-  tokenNumber: string;
-  /** `called_at` for a called Token, `service_started_at` for a serving one. */
-  startedAtMillis: number;
-}
+export type { ActiveToken } from "../lib/activeCounterTokens";
 
 export interface ActiveCounterTokens {
   calledToken: ActiveToken | null;
@@ -26,17 +26,14 @@ const POLL_INTERVAL_MS = 10_000;
 
 /**
  * The Token this Counter has called (not yet started) and the one it is
- * presently serving, read straight off `tokens` rather than the projection:
- * `projectFacility` deliberately excludes `serving` Tokens from
- * `ProjectedService.queue` (they have already left the queue), and it carries
- * no `called_at`/`service_started_at` timestamps for the "Now Serving" clock.
+ * presently serving, read straight off `tokens` rather than the projection —
+ * `selectActiveTokens` explains why, and makes the choice itself.
  *
- * `tokens` has no `counter_id`, only `service_id`, so when a Service runs more
- * than one active Counter this can only report the single most recent called
- * and serving Token for the whole Service, not necessarily the ones at THIS
- * Counter. Acceptable at hackathon scale (the seeded baseline runs one active
- * Counter per Service); a true per-Counter answer needs a schema change, out
- * of scope here.
+ * `is_simulated` is selected as well as the clocks: the Desk calls rush Tokens
+ * during the demo, and every surface showing a simulated Visitor has to say so.
+ *
+ * The first read happens on mount, so this surface comes back from a refresh
+ * without waiting for a Realtime event.
  */
 export function useActiveCounterTokens(serviceId: string | null): ActiveCounterTokens {
   const [calledToken, setCalledToken] = useState<ActiveToken | null>(null);
@@ -58,7 +55,7 @@ export function useActiveCounterTokens(serviceId: string | null): ActiveCounterT
     async function load() {
       const { data, error: fetchError } = await supabase
         .from("tokens")
-        .select("id,token_number,status,called_at,service_started_at")
+        .select("id,token_number,status,called_at,service_started_at,is_simulated")
         .eq("service_id", serviceId)
         .in("status", ["called", "serving"]);
 
@@ -70,39 +67,14 @@ export function useActiveCounterTokens(serviceId: string | null): ActiveCounterT
       }
       setError(null);
 
-      const rows = data ?? [];
-      const called = rows
-        .filter((row) => row.status === "called")
-        .sort((a, b) => Date.parse(b.called_at ?? "") - Date.parse(a.called_at ?? ""))[0];
-      const serving = rows
-        .filter((row) => row.status === "serving")
-        .sort(
-          (a, b) =>
-            Date.parse(b.service_started_at ?? "") - Date.parse(a.service_started_at ?? ""),
-        )[0];
-
-      setCalledToken(
-        called === undefined
-          ? null
-          : {
-              id: called.id as string,
-              tokenNumber: (called.token_number as string | null) ?? "",
-              startedAtMillis:
-                called.called_at !== null ? Date.parse(called.called_at as string) : Date.now(),
-            },
-      );
-      setServingToken(
-        serving === undefined
-          ? null
-          : {
-              id: serving.id as string,
-              tokenNumber: (serving.token_number as string | null) ?? "",
-              startedAtMillis:
-                serving.service_started_at !== null
-                  ? Date.parse(serving.service_started_at as string)
-                  : Date.now(),
-            },
-      );
+      // PostgREST widens `status` to string. The narrowing is sound at this one
+      // boundary and nowhere else: `tokens.status` is CHECK-constrained to the
+      // TokenStatus union in Postgres, and this query filters to two of its
+      // members. Past here the union is enforced by the compiler.
+      const rows = (data ?? []) as unknown as ActiveTokenRow[];
+      const selection = selectActiveTokens(rows, Date.now());
+      setCalledToken(selection.calledToken);
+      setServingToken(selection.servingToken);
     }
 
     void load();

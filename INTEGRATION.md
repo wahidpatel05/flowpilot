@@ -195,7 +195,26 @@ Website team, in this order, and do not start one before the previous works end 
 If the clock runs out, the PWA is what doesn't ship. That is the plan, not a failure — the Android app
 is the primary visitor surface and the PWA exists only so a dead phone can't kill the demo.
 
+## The acceptance run — before judging, both teams together
+
+```bash
+npm --prefix scripts run acceptance     # two passes from a clean reset
+```
+
+`docs/acceptance/s3-acceptance-run.md` is the runbook for the whole thing: the automated half, the
+human run-through on the real devices, the refresh points, the phone-off rehearsal, and who narrates
+which moment. Read it before the rehearsal, not during it.
+
+The automated half shares its chain with the golden path (`scripts/src/closedLoop.ts` — there is only
+one implementation of the demo) and adds what the golden path does not assert: that the chain is
+repeatable rather than lucky, that every number re-derives through a brand-new client the way a
+refresh forces it to, that `approved` never renders after `applied` even when all five events land in
+the same millisecond, that no simulated Token reaches a surface unmarked, and that no surface anywhere
+displays the wording ADR-0002 forbids.
+
 ## Rehearse the failure, once
 
-Before judging, run the golden path once with the phone deliberately switched off, using the PWA in a
-browser instead. It takes two minutes and converts your single biggest stage risk into a shrug.
+Before judging, run the chain once with the phone deliberately switched off, using the PWA in a
+browser instead. It takes two minutes and converts your single biggest stage risk into a shrug. The
+step-by-step is in the runbook above; `npm --prefix scripts run acceptance` proves the Visitor hop
+itself is open before you go looking for a browser.

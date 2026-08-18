@@ -1,4 +1,5 @@
 import type { ProjectedQueueEntry } from "../lib/core";
+import { SimulatedTag } from "./SimulatedTag";
 
 export function UpNextList({ waiting }: { waiting: ProjectedQueueEntry[] }) {
   return (
@@ -11,7 +12,7 @@ export function UpNextList({ waiting }: { waiting: ProjectedQueueEntry[] }) {
           {waiting.map((entry) => (
             <li key={entry.tokenId}>
               {entry.tokenNumber}
-              {entry.isSimulated ? <span className="fp-cold-start"> (simulated)</span> : null}
+              {entry.isSimulated ? <SimulatedTag /> : null}
             </li>
           ))}
         </ol>

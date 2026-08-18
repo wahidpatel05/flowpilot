@@ -3,10 +3,11 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Shared operational scripts. The golden-path script drives the whole closed loop against the real Supabase project and proves a Visitor's ETA drops.",
+  "description": "Shared operational scripts. The golden path drives the closed loop once against the real Supabase project; the acceptance run drives it twice and adds the checks docs/acceptance/s3-acceptance-run.md is built around.",
   "scripts": {
     "golden-path": "tsx src/goldenPath.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "acceptance": "tsx src/acceptanceRun.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.58.0",

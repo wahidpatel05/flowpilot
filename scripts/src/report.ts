@@ -10,13 +10,24 @@ export interface CheckLine {
   detail?: string;
 }
 
-/** Thrown when an assertion fails, so the run stops but still tidies up. */
-export class GoldenPathFailure extends Error {}
+/**
+ * Thrown when an assertion fails, so the run stops but still tidies up. Named
+ * for the harness rather than for the golden path, because the acceptance run
+ * throws it too.
+ */
+export class HarnessFailure extends Error {}
 
 export class Report {
   private readonly lines: CheckLine[] = [];
   private readonly notes: string[] = [];
   private step = "-";
+
+  /**
+   * What the closing verdict calls this run. The golden path and the acceptance
+   * run share this harness, and a summary that says GOLDEN PATH PASSED at the
+   * end of one acceptance pass would misreport which proof just ran.
+   */
+  constructor(private readonly name = "Golden path") {}
 
   /** Starts a numbered step and prints its heading. */
   begin(step: string, title: string): void {
@@ -34,7 +45,7 @@ export class Report {
       `   ${passed ? "[PASS]" : "[FAIL]"} ${label}${detail === undefined ? "" : ` — ${detail}`}\n`,
     );
     if (!passed) {
-      throw new GoldenPathFailure(
+      throw new HarnessFailure(
         `${label}${detail === undefined ? "" : ` — ${detail}`}`,
       );
     }
@@ -83,13 +94,14 @@ export class Report {
     }
 
     process.stdout.write(`\n${rule}\n`);
+    const verdict = this.name.toUpperCase();
     if (failure === undefined) {
       process.stdout.write(
-        `GOLDEN PATH PASSED — ${this.passed} assertions, 0 failures.\n`,
+        `${verdict} PASSED — ${this.passed} assertions, 0 failures.\n`,
       );
     } else {
       process.stdout.write(
-        `GOLDEN PATH FAILED after ${this.passed} passing assertions.\n${failure.message}\n`,
+        `${verdict} FAILED after ${this.passed} passing assertions.\n${failure.message}\n`,
       );
     }
     process.stdout.write(`${rule}\n`);
