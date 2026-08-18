@@ -13,6 +13,7 @@ import {
   type FacilityProjection,
   type QueueHealth,
 } from "@flowpilot/core";
+import { healthLabelFor, waitLabelFor } from "./healthPresentation";
 
 /** One Service as the Visitor sees it on the home screen. */
 export interface ServiceCardModel {
@@ -38,26 +39,10 @@ export interface ServiceCardModel {
   isOpen: boolean;
 }
 
-const HEALTH_LABEL: Record<QueueHealth, string> = {
-  healthy: "Healthy",
-  busy: "Busy",
-  critical: "Critical",
-};
-
-/** Shown instead of a Health word when the Service has no capacity at all. */
-export const CLOSED_HEALTH_LABEL = "Closed";
-
 function queueLabelFor(queueLength: number): string {
   if (queueLength <= 0) return "No one waiting";
   if (queueLength === 1) return "1 person";
   return `${queueLength} people`;
-}
-
-function waitLabelFor(waitMinutes: number | null): string {
-  // A closed Service is a fact the Visitor can act on. "Infinity min" is not.
-  if (waitMinutes === null) return "No counter open";
-  if (waitMinutes < 1) return "No wait";
-  return `${waitMinutes} min`;
 }
 
 /**
@@ -86,7 +71,7 @@ export function buildServiceCatalogue(
       serviceId: service.serviceId,
       name: service.serviceName ?? service.slug ?? "Service",
       health: snapshot.health,
-      healthLabel: isOpen ? HEALTH_LABEL[snapshot.health] : CLOSED_HEALTH_LABEL,
+      healthLabel: healthLabelFor(snapshot.health, isOpen),
       queueLength: snapshot.queueLength,
       queueLabel,
       metaLabel: `${queueLabel} · ${waitLabel}`,

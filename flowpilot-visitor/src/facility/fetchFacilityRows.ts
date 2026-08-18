@@ -1,11 +1,11 @@
 /**
- * The Visitor's reads.
+ * The catalogue's reads: every Service, and enough demand and capacity to
+ * derive each one's Health.
  *
- * Narrow on purpose. The catalogue needs demand (tokens), capacity (active
- * counter_assignments) and the Service catalogue itself; it does not need
- * staff, skills or the Flow Graph, which belong to Control's forecast. Selecting
- * only what is rendered keeps the payload small on hackathon wifi and keeps the
- * app honestly scoped to FlowPilot Visitor.
+ * Narrow on purpose. It does not need staff, skills or the Flow Graph, which
+ * belong to Control's forecast. Selecting only what is rendered keeps the
+ * payload small on hackathon wifi and keeps the app honestly scoped to
+ * FlowPilot Visitor.
  *
  * These rows are never interpreted here — they go straight to projectFacility.
  *
@@ -13,51 +13,29 @@
  * Node against the live project without dragging in React Native's polyfills.
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
-import {
-  ACTIVE_ASSIGNMENT_STATUS,
-  MAX_RECENT_DURATION_SAMPLES,
-  QUEUEING_TOKEN_STATUSES,
-} from "@flowpilot/core";
+import { ACTIVE_ASSIGNMENT_STATUS, QUEUEING_TOKEN_STATUSES } from "@flowpilot/core";
 import type {
   CounterAssignmentRow,
   FacilityRows,
   ServiceRow,
   TokenRow,
 } from "@flowpilot/core";
-
-/**
- * PostgREST applies its own row cap when a query names none, which would
- * silently understate queue length. Stated explicitly, matching scripts/src/client.ts.
- */
-const MAX_ROWS = 5000;
-
-/**
- * Completed Tokens are fetched only for the service durations the engine blends
- * into its average, and it keeps just the newest MAX_RECENT_DURATION_SAMPLES per
- * Service — so this asks for the most recent completions rather than every
- * Token ever closed. Sized for several Services' worth of that window; the
- * ordering is global, so a very busy Service can crowd out a quiet one's samples,
- * which costs the quiet one nothing worse than its configured cold-start default.
- */
-const COMPLETED_TOKEN_LIMIT = MAX_RECENT_DURATION_SAMPLES * 10;
-
-const TOKEN_COLUMNS =
-  "id, service_id, token_number, status, priority, joined_at, called_at, service_started_at, completed_at, is_simulated";
+import {
+  ASSIGNMENT_COLUMNS,
+  COMPLETED_TOKEN_LIMIT,
+  MAX_ROWS,
+  SERVICE_COLUMNS,
+  TOKEN_COLUMNS,
+} from "./rows";
 
 export async function fetchFacilityRows(
   client: SupabaseClient,
 ): Promise<FacilityRows> {
   const [services, counterAssignments, queueing, completed] = await Promise.all([
-    client
-      .from("services")
-      .select(
-        "id, name, slug, default_service_minutes, healthy_wait_threshold, critical_wait_threshold",
-      )
-      .order("name")
-      .limit(MAX_ROWS),
+    client.from("services").select(SERVICE_COLUMNS).order("name").limit(MAX_ROWS),
     client
       .from("counter_assignments")
-      .select("id, counter_id, staff_id, service_id, assignment_type, status")
+      .select(ASSIGNMENT_COLUMNS)
       .eq("status", ACTIVE_ASSIGNMENT_STATUS)
       .limit(MAX_ROWS),
     client

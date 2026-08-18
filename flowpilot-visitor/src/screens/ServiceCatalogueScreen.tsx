@@ -2,25 +2,31 @@
  * FlowPilot Visitor — home.
  *
  * Asks the Visitor what they need, then answers it with every Service and its
- * current wait, queue and Health. This is the whole app for now, and it stays
- * the whole app: no dashboards, no simulation controls, no analytics. Those
- * belong to Control, on a screen someone is paid to watch.
+ * current wait, queue and Health, and a one-tap way to join. This is the whole
+ * app for now, and it stays the whole app: no dashboards, no simulation
+ * controls, no analytics. Those belong to Control, on a screen someone is
+ * paid to watch.
  */
-import {
-  ActivityIndicator,
-  FlatList,
-  Pressable,
-  RefreshControl,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { FlatList, RefreshControl, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { StateMessage } from "../components/StateMessage";
 import { ServiceCard } from "../components/ServiceCard";
+import type { ServiceCardModel } from "../facility/catalogue";
 import { useServiceCatalogue } from "../facility/useServiceCatalogue";
-import { MIN_TOUCH_TARGET, colors, radius, spacing } from "../theme";
+import { colors, spacing } from "../theme";
 
-export function ServiceCatalogueScreen() {
+interface ServiceCatalogueScreenProps {
+  onJoin: (service: ServiceCardModel) => void;
+  /** The Service currently being joined, so only its own card shows a spinner. */
+  joiningServiceId: string | null;
+  joinError: string | null;
+}
+
+export function ServiceCatalogueScreen({
+  onJoin,
+  joiningServiceId,
+  joinError,
+}: ServiceCatalogueScreenProps) {
   const { services, isLoading, isRefreshing, error, refresh } =
     useServiceCatalogue();
 
@@ -29,7 +35,14 @@ export function ServiceCatalogueScreen() {
       <FlatList
         data={services}
         keyExtractor={(service) => service.serviceId}
-        renderItem={({ item }) => <ServiceCard service={item} />}
+        renderItem={({ item }) => (
+          <ServiceCard
+            service={item}
+            onJoin={onJoin}
+            isJoining={joiningServiceId === item.serviceId}
+            disabled={joiningServiceId !== null}
+          />
+        )}
         contentContainerStyle={styles.content}
         ItemSeparatorComponent={() => <View style={{ height: spacing.md }} />}
         ListHeaderComponent={
@@ -39,10 +52,27 @@ export function ServiceCatalogueScreen() {
             <Text style={styles.subtitle}>
               Live waits across the facility. Pull down to refresh.
             </Text>
+            {joinError !== null && (
+              <Text style={styles.joinError}>{joinError}</Text>
+            )}
           </View>
         }
         ListEmptyComponent={
-          <EmptyState isLoading={isLoading} error={error} onRetry={refresh} />
+          isLoading ? (
+            <StateMessage isLoading title="Reading the facility…" />
+          ) : error !== null ? (
+            <StateMessage
+              title="Couldn’t load the services"
+              // The PostgREST message names the table and policy — worth showing.
+              detail={error}
+              retry={{ label: "Try again", onPress: refresh }}
+            />
+          ) : (
+            <StateMessage
+              title="No services listed"
+              detail="This facility has not published any services yet."
+            />
+          )
         }
         refreshControl={
           <RefreshControl
@@ -55,54 +85,6 @@ export function ServiceCatalogueScreen() {
         }
       />
     </SafeAreaView>
-  );
-}
-
-interface EmptyStateProps {
-  isLoading: boolean;
-  error: string | null;
-  onRetry: () => void;
-}
-
-/**
- * One component for all three empty cases, because they are mutually exclusive
- * and a Visitor staring at a blank list needs to be told which one they are in.
- */
-function EmptyState({ isLoading, error, onRetry }: EmptyStateProps) {
-  if (isLoading) {
-    return (
-      <View style={styles.empty}>
-        <ActivityIndicator color={colors.text} />
-        <Text style={styles.emptyText}>Reading the facility…</Text>
-      </View>
-    );
-  }
-
-  if (error !== null) {
-    return (
-      <View style={styles.empty}>
-        <Text style={styles.emptyTitle}>Couldn’t load the services</Text>
-        {/* The PostgREST message names the table and policy — worth showing. */}
-        <Text style={styles.emptyText}>{error}</Text>
-        <Pressable
-          onPress={onRetry}
-          accessibilityRole="button"
-          android_ripple={{ color: colors.border }}
-          style={({ pressed }) => [styles.retry, pressed && styles.retryPressed]}
-        >
-          <Text style={styles.retryLabel}>Try again</Text>
-        </Pressable>
-      </View>
-    );
-  }
-
-  return (
-    <View style={styles.empty}>
-      <Text style={styles.emptyTitle}>No services listed</Text>
-      <Text style={styles.emptyText}>
-        This facility has not published any services yet.
-      </Text>
-    </View>
   );
 }
 
@@ -140,41 +122,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: spacing.xs,
   },
-  empty: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: spacing.sm,
-    paddingVertical: spacing.xl,
-    paddingHorizontal: spacing.md,
-  },
-  emptyTitle: {
-    color: colors.text,
-    fontSize: 17,
-    fontWeight: "600",
-    textAlign: "center",
-  },
-  emptyText: {
-    color: colors.muted,
+  joinError: {
+    color: colors.red,
     fontSize: 14,
-    textAlign: "center",
-    lineHeight: 20,
-  },
-  // The design's Primary button: yellow fill, dark label, rounded.
-  retry: {
-    minHeight: MIN_TOUCH_TARGET,
-    justifyContent: "center",
-    paddingHorizontal: spacing.lg,
     marginTop: spacing.sm,
-    backgroundColor: colors.primary,
-    borderRadius: radius.md,
-  },
-  retryPressed: {
-    opacity: 0.85,
-  },
-  retryLabel: {
-    color: colors.text,
-    fontSize: 15,
-    fontWeight: "700",
   },
 });
