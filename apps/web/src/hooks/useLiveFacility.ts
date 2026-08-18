@@ -30,6 +30,19 @@ const WATCHED_TABLES = ["tokens", "counter_assignments"] as const;
  */
 const POLL_INTERVAL_MS = 5_000;
 
+/** id -> display name, for surfaces that must never render a raw identifier. */
+export type NameLookup = Readonly<Record<string, string>>;
+
+function buildNameLookup(
+  rows: readonly { id: string; name?: string | null }[] | undefined,
+): NameLookup {
+  const lookup: Record<string, string> = {};
+  for (const row of rows ?? []) {
+    lookup[row.id] = row.name ?? row.id;
+  }
+  return lookup;
+}
+
 export interface LiveFacility {
   projection: FacilityProjection | null;
   /**
@@ -38,6 +51,14 @@ export interface LiveFacility {
    * and Control needs the from/to pairs to actually draw the graph.
    */
   flowEdges: readonly ServiceFlowEdgeRow[];
+  /**
+   * Staff and Counter names by id. `CounterState`/`StaffMemberState` are frozen
+   * engine contracts that carry only ids, but a Recommendation card must name
+   * the actual Staff member and Counter, never a raw identifier — so these ride
+   * alongside the projection from the same fetch rather than a second round trip.
+   */
+  staffNames: NameLookup;
+  counterNames: NameLookup;
   connection: ConnectionState;
   error: string | null;
   /** Refetch on demand — used right after a demo-control RPC. */
@@ -54,6 +75,8 @@ export interface LiveFacility {
 export function useLiveFacility(): LiveFacility {
   const [projection, setProjection] = useState<FacilityProjection | null>(null);
   const [flowEdges, setFlowEdges] = useState<readonly ServiceFlowEdgeRow[]>([]);
+  const [staffNames, setStaffNames] = useState<NameLookup>({});
+  const [counterNames, setCounterNames] = useState<NameLookup>({});
   const [error, setError] = useState<string | null>(null);
   const [connection, dispatch] = useReducer(connectionReducer, initialConnectionState);
   const isMounted = useRef(true);
@@ -82,6 +105,8 @@ export function useLiveFacility(): LiveFacility {
       if (!isMounted.current || requestId !== latestRequestId.current) return;
       setProjection(projectFacility(rows));
       setFlowEdges(rows.serviceFlowEdges ?? []);
+      setStaffNames(buildNameLookup(rows.staff));
+      setCounterNames(buildNameLookup(rows.counters));
       setError(null);
     } catch (err) {
       if (!isMounted.current || requestId !== latestRequestId.current) return;
@@ -144,5 +169,5 @@ export function useLiveFacility(): LiveFacility {
     void refetch.current();
   }, []);
 
-  return { projection, flowEdges, connection, error, refresh };
+  return { projection, flowEdges, staffNames, counterNames, connection, error, refresh };
 }

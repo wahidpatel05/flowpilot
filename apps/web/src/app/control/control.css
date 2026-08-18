@@ -355,6 +355,139 @@
   gap: 0.45rem;
 }
 
+/* ---- Recommendation card ---- */
+
+.fp-rec-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.fp-rec-head .fp-panel-title {
+  margin: 0;
+}
+
+.fp-rec-confidence {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  white-space: nowrap;
+  color: var(--fp-muted);
+  background: var(--fp-bg);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.fp-rec-confidence[data-confidence="high"] {
+  color: var(--fp-mint);
+  border-color: rgba(102, 242, 179, 0.4);
+}
+
+.fp-rec-confidence[data-confidence="medium"] {
+  color: var(--fp-amber);
+  border-color: rgba(255, 181, 71, 0.4);
+}
+
+.fp-rec-confidence[data-confidence="low"] {
+  color: var(--fp-muted);
+}
+
+.fp-rec-move {
+  margin: 0 0 0.2rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--fp-text);
+}
+
+.fp-rec-duration {
+  margin: 0 0 0.9rem;
+  font-size: 0.8rem;
+  color: var(--fp-muted);
+}
+
+.fp-rec-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin: 0 0 1rem;
+}
+
+.fp-rec-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.fp-rec-metric dt {
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--fp-muted);
+}
+
+.fp-rec-metric dd {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.fp-rec-metric[data-emphasis="true"] dd {
+  color: var(--fp-cyan);
+}
+
+.fp-rec-actions {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.fp-rec-approve {
+  color: var(--fp-mint);
+  border-color: rgba(102, 242, 179, 0.35);
+}
+
+.fp-rec-reject-confirm {
+  color: var(--fp-coral);
+  border-color: rgba(255, 98, 107, 0.35);
+}
+
+.fp-rec-reject-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.fp-rec-reject-label {
+  font-size: 0.72rem;
+  color: var(--fp-muted);
+}
+
+.fp-rec-reject-input {
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--fp-text);
+  background: var(--fp-bg);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.65rem;
+  resize: vertical;
+}
+
+.fp-rec-reject-input:focus-visible {
+  outline: 2px solid var(--fp-cyan);
+  outline-offset: 1px;
+}
+
+.fp-rec-error {
+  margin: 0.75rem 0 0;
+  font-size: 0.8rem;
+  color: var(--fp-coral);
+}
+
 /* ---- Demo controls ---- */
 
 .fp-demo {

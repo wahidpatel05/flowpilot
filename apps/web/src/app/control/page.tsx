@@ -2,19 +2,23 @@
 
 import { useMemo, useState } from "react";
 import "./control.css";
-import { useLiveFacility } from "../../hooks/useLiveFacility";
+import { useLiveFacility, type NameLookup } from "../../hooks/useLiveFacility";
 import { useDemoControls } from "../../hooks/useDemoControls";
+import { useRecommendation } from "../../hooks/useRecommendation";
 import { buildControlViewModel } from "../../lib/controlViewModel";
 import { ConnectionBadge } from "../../components/ConnectionBadge";
 import { FlowGraph, type TwinMode } from "../../components/FlowGraph";
 import { CriticalCallout } from "../../components/CriticalCallout";
 import { FacilityTotals } from "../../components/FacilityTotals";
 import { DemoControls } from "../../components/DemoControls";
+import { RecommendationCard } from "../../components/RecommendationCard";
 
 export default function ControlPage() {
-  const { projection, flowEdges, connection, error, refresh } = useLiveFacility();
+  const { projection, flowEdges, staffNames, counterNames, connection, error, refresh } =
+    useLiveFacility();
   const [mode, setMode] = useState<TwinMode>("now");
   const demo = useDemoControls(refresh);
+  const recommendation = useRecommendation(projection);
 
   const viewModel = useMemo(
     () =>
@@ -23,6 +27,13 @@ export default function ControlPage() {
         : buildControlViewModel({ projection, flowEdges }),
     [projection, flowEdges],
   );
+
+  const serviceNames: NameLookup = useMemo(() => {
+    if (viewModel === null) return {};
+    const lookup: Record<string, string> = {};
+    for (const service of viewModel.services) lookup[service.serviceId] = service.name;
+    return lookup;
+  }, [viewModel]);
 
   return (
     <main className="fp-control">
@@ -105,6 +116,17 @@ export default function ControlPage() {
 
             <aside className="fp-side">
               <CriticalCallout viewModel={viewModel} mode={mode} />
+              <RecommendationCard
+                recommendation={recommendation.active}
+                noRecommendation={recommendation.noRecommendation}
+                staffNames={staffNames}
+                counterNames={counterNames}
+                serviceNames={serviceNames}
+                pendingAction={recommendation.pendingAction}
+                actionError={recommendation.actionError}
+                onApprove={recommendation.approve}
+                onReject={recommendation.reject}
+              />
             </aside>
           </div>
         </>
