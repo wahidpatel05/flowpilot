@@ -6,6 +6,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Animated, StyleSheet, Text } from "react-native";
 import { colors, radius, spacing } from "../theme";
+import { useFireOnce } from "../token/useFireOnce";
 
 const FADE_IN_MS = 220;
 const HOLD_MS = 2400;
@@ -19,12 +20,16 @@ interface ImprovementBannerProps {
 export function ImprovementBanner({ triggerKey }: ImprovementBannerProps) {
   const [visible, setVisible] = useState(false);
   const opacity = useRef(new Animated.Value(0)).current;
-  const lastKeyRef = useRef<number | null>(triggerKey);
+  const isMountedRef = useRef(true);
+  useEffect(
+    () => () => {
+      isMountedRef.current = false;
+      opacity.stopAnimation();
+    },
+    [opacity],
+  );
 
-  useEffect(() => {
-    if (triggerKey === null || triggerKey === lastKeyRef.current) return;
-    lastKeyRef.current = triggerKey;
-
+  useFireOnce(triggerKey, () => {
     setVisible(true);
     opacity.setValue(0);
     Animated.sequence([
@@ -40,14 +45,18 @@ export function ImprovementBanner({ triggerKey }: ImprovementBannerProps) {
         useNativeDriver: true,
       }),
     ]).start(({ finished }) => {
-      if (finished) setVisible(false);
+      if (finished && isMountedRef.current) setVisible(false);
     });
-  }, [triggerKey, opacity]);
+  });
 
   if (!visible) return null;
 
   return (
-    <Animated.View style={[styles.banner, { opacity }]}>
+    <Animated.View
+      style={[styles.banner, { opacity }]}
+      accessibilityLiveRegion="polite"
+      accessibilityRole="text"
+    >
       <Text style={styles.text}>Your wait just got shorter</Text>
     </Animated.View>
   );
