@@ -155,6 +155,17 @@ export function LiveTokenScreen({
           <ImprovementBanner triggerKey={improvedAt} />
         </View>
 
+        {/* The queue scene: where you stand, drawn as the line itself. A
+            terminal Token has no line left to stand in, so it drops away. */}
+        {!model.isTerminal && (
+          <View style={styles.queueLine}>
+            <QueueLineIllustration
+              customersAhead={model.customersAhead}
+              freedomRadiusState={freedomRadiusState}
+            />
+          </View>
+        )}
+
         {model.health !== null && model.healthLabel !== null && (
           <HealthIndicator
             health={model.health}
@@ -250,6 +261,10 @@ const styles = StyleSheet.create({
   subheadline: {
     color: colors.muted,
     fontSize: 16,
+  },
+  queueLine: {
+    marginTop: spacing.lg,
+    alignItems: "center",
   },
   freedomRadius: {
     marginTop: spacing.md,

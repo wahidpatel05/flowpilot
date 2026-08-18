@@ -5,26 +5,38 @@
  * approaching, next — rather than swapped illustrations per state, so a
  * change in standing always reads as *this* line moving, never a cut.
  *
+ * The figures, the doorway and the approach arrow are SVG (see
+ * ./illustrations), drawn from the same path data the website uses, so the
+ * queue on the phone and the queue on Control are the same illustration.
+ *
  * Three motions, matching the reference's animation strip: a gentle idle bob
  * (the queue is alive, not a static graphic), a forward nudge exactly when
  * `customersAhead` drops (no interaction, no timer — the same discipline
- * useLiveToken follows), and a pulsing arrow toward the door once Freedom
- * Radius says the turn is approaching.
+ * useLiveToken follows), and the dashed arrow pulsing toward the door once
+ * Freedom Radius says the turn is approaching.
  */
 import { useEffect, useRef, useState } from "react";
 import { AccessibilityInfo, Animated, Easing, StyleSheet, View } from "react-native";
 import type { FreedomRadiusState } from "../token/freedomRadius";
-import { colors, neo } from "../theme";
+import { colors, spacing } from "../theme";
+import { PersonFigure } from "./illustrations/PersonFigure";
+import { DoorwayArch } from "./illustrations/DoorwayArch";
+import { ApproachArrow } from "./illustrations/ApproachArrow";
 
 interface QueueLineIllustrationProps {
   customersAhead: number | null;
   freedomRadiusState: FreedomRadiusState | null;
 }
 
-const AHEAD_COLORS = [colors.purple, colors.pink, colors.green];
+/** The strangers ahead of you, in the illustration style's accent colours. */
+const AHEAD_COLORS: readonly string[] = [colors.purple, colors.pink, colors.green];
 const MAX_AHEAD_SHOWN = 3;
+/** One bob driver per figure slot: the three ahead, plus you. */
+const FIGURE_SLOTS = MAX_AHEAD_SHOWN + 1;
+const YOU_SLOT = MAX_AHEAD_SHOWN;
 const BOB_DISTANCE = 3;
 const BOB_DURATION_MS = 900;
+const PERSON_HEIGHT = 44;
 
 export function QueueLineIllustration({
   customersAhead,
@@ -48,9 +60,12 @@ export function QueueLineIllustration({
   const isNext = freedomRadiusState === "turn-approaching";
   const aheadCount = isNext ? 0 : Math.max(0, Math.min(customersAhead ?? 0, MAX_AHEAD_SHOWN));
 
-  // One bob value per figure slot (3 "ahead" + "you"), staggered so the line
-  // reads as a wave rather than everyone bobbing in lockstep.
-  const bobValues = useRef([0, 1, 2, 3].map(() => new Animated.Value(0))).current;
+  // One bob value per figure slot, staggered so the line reads as a wave
+  // rather than everyone bobbing in lockstep.
+  const bobValues = useRef(
+    Array.from({ length: FIGURE_SLOTS }, () => new Animated.Value(0)),
+  ).current;
+
   useEffect(() => {
     if (reducedMotion) return;
     const loops = bobValues.map((value, index) =>
@@ -122,84 +137,77 @@ export function QueueLineIllustration({
 
   return (
     <View style={styles.row}>
-      {Array.from({ length: aheadCount }).map((_, index) => (
-        <Person key={index} color={AHEAD_COLORS[index % AHEAD_COLORS.length]} bob={bobValues[index]} />
+      {Array.from({ length: aheadCount }, (_, index) => (
+        <BobbingFigure
+          key={index}
+          color={AHEAD_COLORS[index % AHEAD_COLORS.length] ?? colors.purple}
+          bob={bobValues[index]}
+        />
       ))}
+
       <Animated.View style={{ transform: [{ translateX: shift }] }}>
-        <Person color={colors.primary} bob={bobValues[3]} you />
+        <BobbingFigure color={colors.primary} bob={bobValues[YOU_SLOT]} emphasis />
       </Animated.View>
-      {isNext && (
+
+      {isNext ? (
         <Animated.View
           style={[
-            styles.arrowDot,
+            styles.arrow,
             {
               opacity: arrow,
               transform: [
-                { translateX: arrow.interpolate({ inputRange: [0, 1], outputRange: [0, 10] }) },
+                { translateX: arrow.interpolate({ inputRange: [0, 1], outputRange: [0, 8] }) },
               ],
             },
           ]}
-        />
-      )}
-      <View style={styles.door} />
+        >
+          <ApproachArrow />
+        </Animated.View>
+      ) : null}
+
+      <DoorwayArch height={64} />
     </View>
   );
 }
 
-function Person({ color, bob, you = false }: { color: string; bob: Animated.Value; you?: boolean }) {
-  const translateY = bob.interpolate({ inputRange: [0, 1], outputRange: [0, -BOB_DISTANCE] });
-  const transform = you ? [{ scale: 1.12 }, { translateY }] : [{ translateY }];
+/**
+ * `bob` is optional only to satisfy indexed access into the drivers array;
+ * a missing driver falls back to a still figure rather than crashing the
+ * whole scene.
+ */
+function BobbingFigure({
+  color,
+  bob,
+  emphasis = false,
+}: {
+  color: string;
+  bob: Animated.Value | undefined;
+  emphasis?: boolean;
+}) {
+  const figure = <PersonFigure color={color} height={PERSON_HEIGHT} />;
 
-  return (
-    <Animated.View style={[styles.person, { transform }]}>
-      <View style={styles.head} />
-      <View style={[styles.body, { backgroundColor: color }]} />
-    </Animated.View>
-  );
+  if (bob === undefined) {
+    return <View style={emphasis ? styles.emphasis : undefined}>{figure}</View>;
+  }
+
+  const translateY = bob.interpolate({ inputRange: [0, 1], outputRange: [0, -BOB_DISTANCE] });
+  // "You" stands slightly larger than the strangers, so the yellow figure is
+  // findable in the line at a glance.
+  const transform = emphasis ? [{ scale: 1.12 }, { translateY }] : [{ translateY }];
+
+  return <Animated.View style={{ transform }}>{figure}</Animated.View>;
 }
 
 const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     alignItems: "flex-end",
-    gap: 10,
+    gap: spacing.sm,
   },
-  person: {
-    alignItems: "center",
+  emphasis: {
+    transform: [{ scale: 1.12 }],
   },
-  head: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: colors.card,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-  },
-  body: {
-    width: 24,
-    height: 28,
-    marginTop: -2,
-    borderRadius: 8,
-    borderWidth: neo.borderWidth - 0.5,
-    borderColor: colors.border,
-  },
-  // A small pip standing in for the reference's dashed arrow into the
-  // doorway — a full dashed curve isn't worth a canvas/SVG dependency here.
-  arrowDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.text,
-    marginBottom: 16,
-  },
-  door: {
-    width: 30,
-    height: 52,
-    marginLeft: 4,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    backgroundColor: colors.purple,
-    borderWidth: neo.borderWidth,
-    borderColor: colors.border,
+  arrow: {
+    marginBottom: spacing.md,
   },
 });

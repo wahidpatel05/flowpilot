@@ -17,7 +17,12 @@ interface TokenPopProps {
 }
 
 const PARTICLE_COUNT = 12;
-const PARTICLE_COLORS = [colors.purple, colors.pink, colors.green, colors.primary];
+const PARTICLE_COLORS: readonly string[] = [
+  colors.purple,
+  colors.pink,
+  colors.green,
+  colors.primary,
+];
 const DURATION_MS = 700;
 
 interface Particle {
@@ -32,7 +37,7 @@ function randomParticles(): Particle[] {
     const angle = (index / PARTICLE_COUNT) * Math.PI * 2 + (Math.random() - 0.5) * 0.4;
     const distance = 36 + Math.random() * 26;
     return {
-      color: PARTICLE_COLORS[index % PARTICLE_COLORS.length],
+      color: PARTICLE_COLORS[index % PARTICLE_COLORS.length] ?? colors.primary,
       dx: Math.cos(angle) * distance,
       // Biased upward — a burst, not an even ring.
       dy: Math.sin(angle) * distance - 12,
