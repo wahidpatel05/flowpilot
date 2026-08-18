@@ -1,0 +1,20 @@
+node_modules/
+dist/
+build/
+.next/
+.expo/
+coverage/
+
+# Secrets — never commit these
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.log
+
+# Agent scratch
+.scratch/
