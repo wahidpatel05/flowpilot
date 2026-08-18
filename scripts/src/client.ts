@@ -3,7 +3,7 @@
  *
  * Reads the publishable key from `.env.local` at the repo root — the same key
  * the web app and the Android app ship, because that is what it is for. No
- * service-role key is used or needed anywhere in FlowPilot.
+ * service-role key is used or needed anywhere in DeQueue.
  */
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -91,7 +91,7 @@ export function loadSupabaseConfig(): SupabaseConfig {
   return { url, publishableKey };
 }
 
-export function createFlowPilotClient(config = loadSupabaseConfig()): SupabaseClient {
+export function createDeQueueClient(config = loadSupabaseConfig()): SupabaseClient {
   // supabase-js builds its Realtime client eagerly and Node 20 has no global
   // WebSocket, so it needs a transport handed to it. Node 22+ and every browser
   // and React Native runtime already have one. This script never subscribes —

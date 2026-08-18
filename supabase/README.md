@@ -1,10 +1,10 @@
-# FlowPilot — Supabase
+# DeQueue — Supabase
 
 Two files, run in order:
 
 | File | What it does |
 | --- | --- |
-| `migrations/0001_init.sql` | Drops and recreates the whole FlowPilot schema: 16 tables, indexes, Realtime publication, RLS, and the two demo functions. Destructive and re-runnable. |
+| `migrations/0001_init.sql` | Drops and recreates the whole DeQueue schema: 16 tables, indexes, Realtime publication, RLS, and the two demo functions. Destructive and re-runnable. |
 | `seed.sql` | MHSSCE demo data: org, location, 3 services, 4 staff, 5 counters, flow graph, 40 completed history tokens, then calls `reset_demo()` to build the live queue. Re-runnable. |
 
 Both have been executed end-to-end against a real Postgres 17 and re-run twice to
@@ -62,6 +62,23 @@ add this to `supabase/config.toml`:
 enabled = true
 sql_paths = ["./seed.sql"]
 ```
+
+### Option C — a database that already exists (use this after the DeQueue rename)
+
+`migrations/0005_rename_to_dequeue.sql` exists for one reason: every message a
+person actually reads is raised from inside a function, so a database created
+before the rename keeps saying `FlowPilot:` however many times the apps are
+rebuilt. A Desk clerk sees it next to a UI that already says DeQueue.
+
+Paste `migrations/0005_rename_to_dequeue.sql` into the SQL editor and Run. It
+redefines the seven affected functions in place — **no table is touched and no
+row is deleted**, so the completed Token history that keeps ETAs realistic
+survives. Re-running `0001_init.sql` would fix the text too, but it drops
+everything.
+
+`0001`–`0004` stay the source of truth. `0005`'s bodies are copied verbatim from
+the renamed `0002` and `0004`; if one of those functions changes again, change it
+there and regenerate `0005`.
 
 ### Re-running
 

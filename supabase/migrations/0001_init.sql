@@ -1,5 +1,5 @@
 -- =============================================================================
--- FlowPilot — 0001_init.sql
+-- DeQueue — 0001_init.sql
 -- Postgres / Supabase. Runs top-to-bottom in the Supabase SQL editor.
 --
 -- CONTRACT SOURCE OF TRUTH: flowpilot-core/src/types.ts (FROZEN).
@@ -16,7 +16,7 @@
 --      the simulator, never a measurement.
 --
 -- This migration is destructive by design (demo reset). It drops and recreates
--- the whole public FlowPilot schema.
+-- the whole public DeQueue schema.
 -- =============================================================================
 
 -- gen_random_uuid() is core Postgres from 13 onwards; pgcrypto is only a

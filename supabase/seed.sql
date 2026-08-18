@@ -1,5 +1,5 @@
 -- =============================================================================
--- FlowPilot — seed.sql
+-- DeQueue — seed.sql
 -- Run AFTER supabase/migrations/0001_init.sql. Safe to re-run: every insert is
 -- keyed on a stable UUID and uses ON CONFLICT, and the live queue is rebuilt by
 -- reset_demo() at the bottom.

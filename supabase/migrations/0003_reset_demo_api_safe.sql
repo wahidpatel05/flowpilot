@@ -1,5 +1,5 @@
 -- =============================================================================
--- FlowPilot — 0003_reset_demo_api_safe.sql
+-- DeQueue — 0003_reset_demo_api_safe.sql
 --
 -- BUG FIX, found by running the golden path against the live project:
 -- reset_demo() raised SQLSTATE 21000 "DELETE requires a WHERE clause" and did

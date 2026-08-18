@@ -1,61 +1,25 @@
 -- =============================================================================
--- DeQueue — 0002_apply_intervention.sql
+-- DeQueue — 0005_rename_to_dequeue.sql
+-- =============================================================================
+-- The product was renamed FlowPilot -> DeQueue. Every message a person actually
+-- reads is raised from inside these functions, so a database created before the
+-- rename keeps saying "FlowPilot:" no matter what the apps are rebuilt with --
+-- which is exactly what a Desk clerk saw on screen next to a UI already saying
+-- DeQueue.
 --
--- THE KEYSTONE HOP, in Postgres.
+-- Re-running 0001_init.sql would also fix it, but that drops every table and
+-- takes the completed Token history with it, and ETAs stop being realistic
+-- without that history. This redefines the affected functions in place instead:
+-- no table is touched and no row is deleted.
 --
--- Every other hop in the DeQueue loop is a surface displaying something. This
--- file is the one place where the facility's capacity actually changes. Three
--- teams (Control on web, Desk on web, Visitor on Android) must never each
--- implement it, so it lives here as one atomic RPC per lifecycle transition:
---
---   Recommendation --approve_recommendation()--> Intervention (approved)
---                  --accept_intervention()----> Intervention (accepted)
---                  --apply_intervention()-----> counter_assignments WRITTEN  <-- KEYSTONE
---                  --expire_temporary_assignments()--> Intervention (completed)
---   Recommendation --reject_recommendation()---> rejected
---
--- CONTRACT SOURCE OF TRUTH: flowpilot-core/src/types.ts (FROZEN).
--- Every status string written below already exists in a CHECK constraint in
--- 0001_init.sql:
---   recommendations.status / interventions.status
---       ('recommended','approved','pending_staff','accepted','applied',
---        'rejected','completed')
---   counter_assignments.status          ('active','ended')
---   counter_assignments.assignment_type ('primary','temporary')
---   counters.status                     ('active','inactive')
---   staff.status                        ('idle','active')
---   action_type                         ('activate_counter','reassign_staff')
---
--- There is no 'reassign_counter'. There is no 'human_minutes_saved'.
---
--- Runs standalone AFTER 0001_init.sql. Idempotent: every function is preceded
--- by DROP FUNCTION IF EXISTS on its exact signature, so a changed signature can
--- never leave an orphaned overload behind for the clients to hit by accident.
---
--- NOTE ON TIMELINE ORDERING: every intervention_events / queue_events row below
--- stamps created_at with clock_timestamp(), NOT now(). now() is the TRANSACTION
--- timestamp, so two events appended by the same function call would share it to
--- the microsecond and Control's "order by created_at" timeline would render
--- 'applied' before 'approved' at random. clock_timestamp() is the real instant
--- of the insert, so it is not a fabricated timestamp. Each event also carries
--- metadata.sequence (the canonical lifecycle position from spec sheet section
--- 12), so a client can order by (created_at, (metadata->>'sequence')::int) and
--- be correct even on a coarse clock.
---
--- NOTE ON ETA: these functions deliberately do NOT compute predicted wait.
--- calculateEta() in flowpilot-core is the single ETA implementation
--- (INTEGRATION.md rule 1). queue_events.predicted_wait is left NULL here and
--- the clients recompute; the row exists so Operational Replay can reconstruct
--- the capacity change (active_counters before -> after).
+-- The bodies below are copied verbatim from the renamed 0002 and 0004. Both
+-- files open each definition with 'drop function if exists ... cascade', so
+-- this is re-runnable, and 0001-0004 remain the source of truth -- if one of
+-- these functions changes again, change it there and regenerate this file.
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------
--- 0. Internal helper: human-readable names for an action payload.
---
--- intervention_events.message renders straight into Control's timeline, so it
--- must read like a human wrote it and must never contain a raw uuid. This
--- resolves a payload's ids to names once, so every event writer below phrases
--- things the same way.
+-- From 0002_apply_intervention.sql
 -- -----------------------------------------------------------------------------
 drop function if exists public.fp_action_label(text, jsonb) cascade;
 
@@ -1027,6 +991,128 @@ grant execute on function public.apply_intervention(uuid)          to anon, auth
 grant execute on function public.expire_temporary_assignments()    to anon, authenticated;
 grant execute on function public.reject_recommendation(uuid, text) to anon, authenticated;
 
+
+-- -----------------------------------------------------------------------------
+-- From 0004_desk_counter_toggle.sql
+-- -----------------------------------------------------------------------------
+drop function if exists public.set_counter_active(uuid, boolean) cascade;
+
+create function public.set_counter_active(p_counter_id uuid, p_active boolean)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $fn$
+declare
+  v_counter     public.counters;
+  v_assignment  public.counter_assignments;
+  v_service_id  uuid;
+begin
+  select * into v_counter from public.counters where id = p_counter_id for update;
+
+  if not found then
+    raise exception 'DeQueue: counter % does not exist.', p_counter_id
+      using errcode = 'P0001';
+  end if;
+
+  if p_active = false then
+    if v_counter.status = 'inactive' then
+      raise exception
+        'DeQueue: % is already inactive.', v_counter.name
+        using errcode = 'P0001';
+    end if;
+
+    select * into v_assignment
+      from public.counter_assignments
+     where counter_id = p_counter_id and status = 'active'
+     order by started_at desc
+     limit 1
+     for update;
+
+    if not found then
+      raise exception
+        'DeQueue: % has no active assignment to end.', v_counter.name
+        using errcode = 'P0001';
+    end if;
+
+    update public.counter_assignments
+       set status = 'ended', ends_at = now()
+     where id = v_assignment.id;
+
+    update public.counters set status = 'inactive' where id = p_counter_id;
+
+    if v_assignment.staff_id is not null and not exists (
+      select 1 from public.counter_assignments
+       where staff_id = v_assignment.staff_id and status = 'active'
+    ) then
+      update public.staff set status = 'idle' where id = v_assignment.staff_id;
+    end if;
+
+    return jsonb_build_object(
+      'counter_id', p_counter_id,
+      'active', false,
+      'ended_assignment_id', v_assignment.id,
+      'service_id', v_assignment.service_id
+    );
+  end if;
+
+  -- p_active = true: resume this Counter's own primary Assignment. Reviving a
+  -- Recommendation-driven temporary Assignment is deliberately out of scope —
+  -- that Assignment's lifecycle belongs to apply_intervention() /
+  -- expire_temporary_assignments(), not to a manual toggle.
+  if v_counter.status = 'active' then
+    raise exception
+      'DeQueue: % is already active.', v_counter.name
+      using errcode = 'P0001';
+  end if;
+
+  select * into v_assignment
+    from public.counter_assignments
+   where counter_id = p_counter_id and assignment_type = 'primary'
+   order by started_at desc
+   limit 1
+   for update;
+
+  if not found then
+    raise exception
+      'DeQueue: % has no prior Assignment to resume. Open it via activate_counter first.',
+      v_counter.name
+      using errcode = 'P0001';
+  end if;
+
+  if v_assignment.status = 'active' then
+    raise exception
+      'DeQueue: % already has an active assignment.', v_counter.name
+      using errcode = 'P0001';
+  end if;
+
+  update public.counter_assignments
+     set status = 'active', ends_at = null
+   where id = v_assignment.id;
+
+  update public.counters set status = 'active' where id = p_counter_id;
+
+  if v_assignment.staff_id is not null then
+    update public.staff set status = 'active' where id = v_assignment.staff_id;
+  end if;
+
+  v_service_id := v_assignment.service_id;
+
+  return jsonb_build_object(
+    'counter_id', p_counter_id,
+    'active', true,
+    'resumed_assignment_id', v_assignment.id,
+    'service_id', v_service_id
+  );
+end
+$fn$;
+
+comment on function public.set_counter_active(uuid, boolean) is
+  'The Desk Counter toggle. Ends or resumes THIS counter''s own (primary) assignment in place — no Service change, no Skill check. Distinct from activate_counter/reassign_staff, which move an Assignment under a Recommendation.';
+
+grant execute on function public.set_counter_active(uuid, boolean) to anon, authenticated;
+
+
 -- =============================================================================
--- END 0002_apply_intervention.sql
+-- END 0005_rename_to_dequeue.sql
 -- =============================================================================

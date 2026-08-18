@@ -1,4 +1,4 @@
--- FlowPilot — complete one-paste database bootstrap.
+-- DeQueue — complete one-paste database bootstrap.
 -- Paste this entire file into the Supabase SQL editor and press Run.
 -- Safe to re-run: it drops and recreates everything, then reseeds.
 --
@@ -11,7 +11,7 @@
 
 -- =================== 1/5  0001_init.sql ===================
 -- =============================================================================
--- FlowPilot — 0001_init.sql
+-- DeQueue — 0001_init.sql
 -- Postgres / Supabase. Runs top-to-bottom in the Supabase SQL editor.
 --
 -- CONTRACT SOURCE OF TRUTH: flowpilot-core/src/types.ts (FROZEN).
@@ -28,7 +28,7 @@
 --      the simulator, never a measurement.
 --
 -- This migration is destructive by design (demo reset). It drops and recreates
--- the whole public FlowPilot schema.
+-- the whole public DeQueue schema.
 -- =============================================================================
 
 -- gen_random_uuid() is core Postgres from 13 onwards; pgcrypto is only a
@@ -735,7 +735,7 @@ grant execute on function public.simulate_rush() to anon, authenticated;
 
 -- =================== 2/5  seed.sql ===================
 -- =============================================================================
--- FlowPilot — seed.sql
+-- DeQueue — seed.sql
 -- Run AFTER supabase/migrations/0001_init.sql. Safe to re-run: every insert is
 -- keyed on a stable UUID and uses ON CONFLICT, and the live queue is rebuilt by
 -- reset_demo() at the bottom.
@@ -1025,11 +1025,11 @@ order by s.slug;
 
 -- =================== 3/5  0002_apply_intervention.sql ===================
 -- =============================================================================
--- FlowPilot — 0002_apply_intervention.sql
+-- DeQueue — 0002_apply_intervention.sql
 --
 -- THE KEYSTONE HOP, in Postgres.
 --
--- Every other hop in the FlowPilot loop is a surface displaying something. This
+-- Every other hop in the DeQueue loop is a surface displaying something. This
 -- file is the one place where the facility's capacity actually changes. Three
 -- teams (Control on web, Desk on web, Visitor on Android) must never each
 -- implement it, so it lives here as one atomic RPC per lifecycle transition:
@@ -1127,7 +1127,7 @@ comment on function public.fp_action_label(text, jsonb) is
 -- -----------------------------------------------------------------------------
 -- 1. approve_recommendation(p_recommendation_id)
 --
--- The manager-approves hop. A Recommendation is FlowPilot''s opinion; the moment
+-- The manager-approves hop. A Recommendation is DeQueue''s opinion; the moment
 -- a human approves it, it becomes an Intervention. The two are never the same
 -- record (CONTEXT.md), so this INSERTs an interventions row rather than
 -- mutating the recommendation into one.
@@ -1152,13 +1152,13 @@ begin
    for update;
 
   if not found then
-    raise exception 'FlowPilot: recommendation % does not exist.', p_recommendation_id
+    raise exception 'DeQueue: recommendation % does not exist.', p_recommendation_id
       using errcode = 'P0001';
   end if;
 
   if v_rec.status <> 'recommended' then
     raise exception
-      'FlowPilot: this recommendation cannot be approved because it is already "%". Only a recommendation still in "recommended" can be approved.',
+      'DeQueue: this recommendation cannot be approved because it is already "%". Only a recommendation still in "recommended" can be approved.',
       v_rec.status
       using errcode = 'P0001';
   end if;
@@ -1188,11 +1188,11 @@ begin
   ) then
     if v_rec.action_type = 'activate_counter' then
       v_msg := format(
-        'FlowPilot recommended opening %s with %s for %s.',
+        'DeQueue recommended opening %s with %s for %s.',
         v_lbl ->> 'counter_name', v_lbl ->> 'staff_name', v_lbl ->> 'service_name');
     else
       v_msg := format(
-        'FlowPilot recommended moving %s from %s to %s.',
+        'DeQueue recommended moving %s from %s to %s.',
         v_lbl ->> 'staff_name', v_lbl ->> 'from_service_name', v_lbl ->> 'to_service_name');
     end if;
 
@@ -1269,13 +1269,13 @@ begin
    for update;
 
   if not found then
-    raise exception 'FlowPilot: intervention % does not exist.', p_intervention_id
+    raise exception 'DeQueue: intervention % does not exist.', p_intervention_id
       using errcode = 'P0001';
   end if;
 
   if v_int.status not in ('approved', 'pending_staff') then
     raise exception
-      'FlowPilot: this intervention cannot be accepted because it is "%". Only an approved or pending_staff intervention can be accepted.',
+      'DeQueue: this intervention cannot be accepted because it is "%". Only an approved or pending_staff intervention can be accepted.',
       v_int.status
       using errcode = 'P0001';
   end if;
@@ -1325,7 +1325,7 @@ comment on function public.accept_intervention(uuid) is
 -- -----------------------------------------------------------------------------
 -- 3. apply_intervention(p_intervention_id)   <-- THE KEYSTONE
 --
--- The only place in FlowPilot where the facility actually changes. If this row
+-- The only place in DeQueue where the facility actually changes. If this row
 -- is never written, the Visitor's ETA never drops and there is no demo.
 --
 -- Atomicity: a plpgsql function body already runs inside the caller's
@@ -1376,27 +1376,27 @@ begin
      for update;
 
     if not found then
-      raise exception 'FlowPilot: intervention % does not exist.', p_intervention_id
+      raise exception 'DeQueue: intervention % does not exist.', p_intervention_id
         using errcode = 'P0001';
     end if;
 
     -- Explicit idempotency guard. Loud, never silent.
     if v_int.status = 'applied' then
       raise exception
-        'FlowPilot: this intervention was already applied (at %). Capacity has NOT been changed a second time.',
+        'DeQueue: this intervention was already applied (at %). Capacity has NOT been changed a second time.',
         coalesce(to_char(v_int.applied_at, 'HH24:MI:SS'), 'an earlier point')
         using errcode = 'P0001';
     end if;
 
     if v_int.status = 'completed' then
       raise exception
-        'FlowPilot: this intervention has already run its course and is completed. It cannot be applied again.'
+        'DeQueue: this intervention has already run its course and is completed. It cannot be applied again.'
         using errcode = 'P0001';
     end if;
 
     if v_int.status not in ('approved', 'accepted') then
       raise exception
-        'FlowPilot: this intervention cannot be applied because it is "%". Only an approved or accepted intervention can be applied.',
+        'DeQueue: this intervention cannot be applied because it is "%". Only an approved or accepted intervention can be applied.',
         v_int.status
         using errcode = 'P0001';
     end if;
@@ -1426,27 +1426,27 @@ begin
       -- ---- VALIDATE BEFORE MUTATING --------------------------------------
       if v_counter_id is null or v_staff_id is null or v_service_id is null then
         raise exception
-          'FlowPilot: this activate_counter intervention is missing counterId, staffId or serviceId in its payload.'
+          'DeQueue: this activate_counter intervention is missing counterId, staffId or serviceId in its payload.'
           using errcode = 'P0001';
       end if;
 
       if v_duration <= 0 then
-        raise exception 'FlowPilot: durationMinutes must be greater than zero (got %).', v_duration
+        raise exception 'DeQueue: durationMinutes must be greater than zero (got %).', v_duration
           using errcode = 'P0001';
       end if;
 
       if not exists (select 1 from public.counters where id = v_counter_id) then
-        raise exception 'FlowPilot: the counter named in this intervention no longer exists.'
+        raise exception 'DeQueue: the counter named in this intervention no longer exists.'
           using errcode = 'P0001';
       end if;
 
       if not exists (select 1 from public.staff where id = v_staff_id) then
-        raise exception 'FlowPilot: the staff member named in this intervention no longer exists.'
+        raise exception 'DeQueue: the staff member named in this intervention no longer exists.'
           using errcode = 'P0001';
       end if;
 
       if not exists (select 1 from public.services where id = v_service_id) then
-        raise exception 'FlowPilot: the service named in this intervention no longer exists.'
+        raise exception 'DeQueue: the service named in this intervention no longer exists.'
           using errcode = 'P0001';
       end if;
 
@@ -1456,7 +1456,7 @@ begin
          where staff_id = v_staff_id and service_id = v_service_id
       ) then
         raise exception
-          'FlowPilot: % does not hold the skill for %, so % cannot be opened for that service. Skill is a hard requirement.',
+          'DeQueue: % does not hold the skill for %, so % cannot be opened for that service. Skill is a hard requirement.',
           v_lbl ->> 'staff_name', v_lbl ->> 'service_name', v_lbl ->> 'counter_name'
           using errcode = 'P0001';
       end if;
@@ -1467,7 +1467,7 @@ begin
          where counter_id = v_counter_id and status = 'active'
       ) then
         raise exception
-          'FlowPilot: % already has an active assignment, so it cannot be opened again.',
+          'DeQueue: % already has an active assignment, so it cannot be opened again.',
           v_lbl ->> 'counter_name'
           using errcode = 'P0001';
       end if;
@@ -1507,39 +1507,39 @@ begin
       if v_staff_id is null or v_counter_id is null
          or v_from_service_id is null or v_to_service_id is null then
         raise exception
-          'FlowPilot: this reassign_staff intervention is missing staffId, counterId, fromServiceId or toServiceId in its payload.'
+          'DeQueue: this reassign_staff intervention is missing staffId, counterId, fromServiceId or toServiceId in its payload.'
           using errcode = 'P0001';
       end if;
 
       if v_duration <= 0 then
-        raise exception 'FlowPilot: durationMinutes must be greater than zero (got %).', v_duration
+        raise exception 'DeQueue: durationMinutes must be greater than zero (got %).', v_duration
           using errcode = 'P0001';
       end if;
 
       if v_from_service_id = v_to_service_id then
         raise exception
-          'FlowPilot: this reassignment would move % to %, the service they are already serving.',
+          'DeQueue: this reassignment would move % to %, the service they are already serving.',
           v_lbl ->> 'staff_name', v_lbl ->> 'to_service_name'
           using errcode = 'P0001';
       end if;
 
       if not exists (select 1 from public.staff where id = v_staff_id) then
-        raise exception 'FlowPilot: the staff member named in this intervention no longer exists.'
+        raise exception 'DeQueue: the staff member named in this intervention no longer exists.'
           using errcode = 'P0001';
       end if;
 
       if not exists (select 1 from public.counters where id = v_counter_id) then
-        raise exception 'FlowPilot: the counter named in this intervention no longer exists.'
+        raise exception 'DeQueue: the counter named in this intervention no longer exists.'
           using errcode = 'P0001';
       end if;
 
       if not exists (select 1 from public.services where id = v_from_service_id) then
-        raise exception 'FlowPilot: the source service named in this intervention no longer exists.'
+        raise exception 'DeQueue: the source service named in this intervention no longer exists.'
           using errcode = 'P0001';
       end if;
 
       if not exists (select 1 from public.services where id = v_to_service_id) then
-        raise exception 'FlowPilot: the destination service named in this intervention no longer exists.'
+        raise exception 'DeQueue: the destination service named in this intervention no longer exists.'
           using errcode = 'P0001';
       end if;
 
@@ -1549,7 +1549,7 @@ begin
          where staff_id = v_staff_id and service_id = v_to_service_id
       ) then
         raise exception
-          'FlowPilot: % does not hold the skill for %, so this reassignment was refused. Skill is a hard requirement.',
+          'DeQueue: % does not hold the skill for %, so this reassignment was refused. Skill is a hard requirement.',
           v_lbl ->> 'staff_name', v_lbl ->> 'to_service_name'
           using errcode = 'P0001';
       end if;
@@ -1567,7 +1567,7 @@ begin
 
       if v_ended_assignment is null then
         raise exception
-          'FlowPilot: % has no active assignment on %, so there is nothing to reassign.',
+          'DeQueue: % has no active assignment on %, so there is nothing to reassign.',
           v_lbl ->> 'staff_name', v_lbl ->> 'from_service_name'
           using errcode = 'P0001';
       end if;
@@ -1582,7 +1582,7 @@ begin
            and ca.id <> v_ended_assignment
       ) < 1 then
         raise exception
-          'FlowPilot: moving % off % would leave % with zero active counters. Open another counter for % first.',
+          'DeQueue: moving % off % would leave % with zero active counters. Open another counter for % first.',
           v_lbl ->> 'staff_name', v_lbl ->> 'from_service_name',
           v_lbl ->> 'from_service_name', v_lbl ->> 'from_service_name'
           using errcode = 'P0001';
@@ -1627,7 +1627,7 @@ begin
       -- Unreachable while the CHECK constraint holds. Kept so that a future
       -- action_type can never silently do nothing.
       raise exception
-        'FlowPilot: unknown action_type "%". FlowPilot only knows activate_counter and reassign_staff.',
+        'DeQueue: unknown action_type "%". DeQueue only knows activate_counter and reassign_staff.',
         v_int.action_type
         using errcode = 'P0001';
     end if;
@@ -1750,7 +1750,7 @@ end
 $fn$;
 
 comment on function public.apply_intervention(uuid) is
-  'THE KEYSTONE. The only place FlowPilot changes real capacity. Atomic, skill-checked, refuses to strand a service at zero active counters, and raises loudly rather than applying twice. Writes counter_assignments, flips counters/staff status, appends applied + eta_recalculated timeline events and one capacity_changed queue_event per affected service.';
+  'THE KEYSTONE. The only place DeQueue changes real capacity. Atomic, skill-checked, refuses to strand a service at zero active counters, and raises loudly rather than applying twice. Writes counter_assignments, flips counters/staff status, appends applied + eta_recalculated timeline events and one capacity_changed queue_event per affected service.';
 
 -- -----------------------------------------------------------------------------
 -- 4. expire_temporary_assignments()
@@ -1906,7 +1906,7 @@ comment on function public.expire_temporary_assignments() is
 -- -----------------------------------------------------------------------------
 -- 5. reject_recommendation(p_recommendation_id, p_reason)
 --
--- The manager dismisses FlowPilot's opinion.
+-- The manager dismisses DeQueue's opinion.
 --
 -- DEVIATION, deliberate: intervention_events.intervention_id is NOT NULL, and a
 -- Recommendation only becomes an Intervention when a human approves it
@@ -1945,19 +1945,19 @@ begin
    for update;
 
   if not found then
-    raise exception 'FlowPilot: recommendation % does not exist.', p_recommendation_id
+    raise exception 'DeQueue: recommendation % does not exist.', p_recommendation_id
       using errcode = 'P0001';
   end if;
 
   if v_rec.status in ('applied', 'completed') then
     raise exception
-      'FlowPilot: this recommendation is already "%" and cannot be rejected. Its capacity change has already happened.',
+      'DeQueue: this recommendation is already "%" and cannot be rejected. Its capacity change has already happened.',
       v_rec.status
       using errcode = 'P0001';
   end if;
 
   if v_rec.status = 'rejected' then
-    raise exception 'FlowPilot: this recommendation has already been rejected.'
+    raise exception 'DeQueue: this recommendation has already been rejected.'
       using errcode = 'P0001';
   end if;
 
@@ -2059,7 +2059,7 @@ grant execute on function public.reject_recommendation(uuid, text) to anon, auth
 
 -- =================== 4/5  0003_reset_demo_api_safe.sql ===================
 -- =============================================================================
--- FlowPilot — 0003_reset_demo_api_safe.sql
+-- DeQueue — 0003_reset_demo_api_safe.sql
 --
 -- BUG FIX, found by running the golden path against the live project:
 -- reset_demo() raised SQLSTATE 21000 "DELETE requires a WHERE clause" and did
@@ -2209,7 +2209,7 @@ grant execute on function public.reset_demo() to anon, authenticated;
 
 -- =================== 5/5  0004_desk_counter_toggle.sql ===================
 -- =============================================================================
--- FlowPilot — 0004_desk_counter_toggle.sql
+-- DeQueue — 0004_desk_counter_toggle.sql
 --
 -- The Desk's own Counter toggle. NOT one of the two Intervention action types
 -- (activate_counter, reassign_staff) from ADR-0001 — those move an Assignment
@@ -2242,14 +2242,14 @@ begin
   select * into v_counter from public.counters where id = p_counter_id for update;
 
   if not found then
-    raise exception 'FlowPilot: counter % does not exist.', p_counter_id
+    raise exception 'DeQueue: counter % does not exist.', p_counter_id
       using errcode = 'P0001';
   end if;
 
   if p_active = false then
     if v_counter.status = 'inactive' then
       raise exception
-        'FlowPilot: % is already inactive.', v_counter.name
+        'DeQueue: % is already inactive.', v_counter.name
         using errcode = 'P0001';
     end if;
 
@@ -2262,7 +2262,7 @@ begin
 
     if not found then
       raise exception
-        'FlowPilot: % has no active assignment to end.', v_counter.name
+        'DeQueue: % has no active assignment to end.', v_counter.name
         using errcode = 'P0001';
     end if;
 
@@ -2293,7 +2293,7 @@ begin
   -- expire_temporary_assignments(), not to a manual toggle.
   if v_counter.status = 'active' then
     raise exception
-      'FlowPilot: % is already active.', v_counter.name
+      'DeQueue: % is already active.', v_counter.name
       using errcode = 'P0001';
   end if;
 
@@ -2306,14 +2306,14 @@ begin
 
   if not found then
     raise exception
-      'FlowPilot: % has no prior Assignment to resume. Open it via activate_counter first.',
+      'DeQueue: % has no prior Assignment to resume. Open it via activate_counter first.',
       v_counter.name
       using errcode = 'P0001';
   end if;
 
   if v_assignment.status = 'active' then
     raise exception
-      'FlowPilot: % already has an active assignment.', v_counter.name
+      'DeQueue: % already has an active assignment.', v_counter.name
       using errcode = 'P0001';
   end if;
 

@@ -1,5 +1,5 @@
 -- =============================================================================
--- FlowPilot — 0004_desk_counter_toggle.sql
+-- DeQueue — 0004_desk_counter_toggle.sql
 --
 -- The Desk's own Counter toggle. NOT one of the two Intervention action types
 -- (activate_counter, reassign_staff) from ADR-0001 — those move an Assignment
@@ -32,14 +32,14 @@ begin
   select * into v_counter from public.counters where id = p_counter_id for update;
 
   if not found then
-    raise exception 'FlowPilot: counter % does not exist.', p_counter_id
+    raise exception 'DeQueue: counter % does not exist.', p_counter_id
       using errcode = 'P0001';
   end if;
 
   if p_active = false then
     if v_counter.status = 'inactive' then
       raise exception
-        'FlowPilot: % is already inactive.', v_counter.name
+        'DeQueue: % is already inactive.', v_counter.name
         using errcode = 'P0001';
     end if;
 
@@ -52,7 +52,7 @@ begin
 
     if not found then
       raise exception
-        'FlowPilot: % has no active assignment to end.', v_counter.name
+        'DeQueue: % has no active assignment to end.', v_counter.name
         using errcode = 'P0001';
     end if;
 
@@ -83,7 +83,7 @@ begin
   -- expire_temporary_assignments(), not to a manual toggle.
   if v_counter.status = 'active' then
     raise exception
-      'FlowPilot: % is already active.', v_counter.name
+      'DeQueue: % is already active.', v_counter.name
       using errcode = 'P0001';
   end if;
 
@@ -96,14 +96,14 @@ begin
 
   if not found then
     raise exception
-      'FlowPilot: % has no prior Assignment to resume. Open it via activate_counter first.',
+      'DeQueue: % has no prior Assignment to resume. Open it via activate_counter first.',
       v_counter.name
       using errcode = 'P0001';
   end if;
 
   if v_assignment.status = 'active' then
     raise exception
-      'FlowPilot: % already has an active assignment.', v_counter.name
+      'DeQueue: % already has an active assignment.', v_counter.name
       using errcode = 'P0001';
   end if;
 

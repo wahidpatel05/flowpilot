@@ -1,5 +1,5 @@
 /**
- * FlowPilot golden path — proves the closed loop closes, against the real
+ * DeQueue golden path — proves the closed loop closes, against the real
  * Supabase project, with no UI involved.
  *
  *   npm --prefix scripts run golden-path
@@ -37,7 +37,7 @@ import type {
   Recommendation,
 } from "../../flowpilot-core/src/index.js";
 import {
-  createFlowPilotClient,
+  createDeQueueClient,
   fetchFacilityRows,
   loadSupabaseConfig,
   rpc,
@@ -711,14 +711,14 @@ async function main(): Promise<void> {
   process.stdout.write(
     [
       "=".repeat(78),
-      "FlowPilot golden path — driving the closed loop against the live project",
+      "DeQueue golden path — driving the closed loop against the live project",
       "=".repeat(78),
       `Project: ${config.url}`,
       "Reads and writes only through the publishable key and the demo RPCs.",
     ].join("\n") + "\n",
   );
 
-  const client = createFlowPilotClient(config);
+  const client = createDeQueueClient(config);
   let headline: string[] = [];
   let failure: Error | undefined;
 
