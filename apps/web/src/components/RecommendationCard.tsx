@@ -6,6 +6,7 @@ import { formatWaitMinutes } from "../lib/formatMinutes";
 import { recommendationParties, type RecommendationRow } from "../lib/recommendationRow";
 import type { RecommendationAction } from "../hooks/useRecommendation";
 import type { NameLookup } from "../hooks/useLiveFacility";
+import { Modal } from "./Modal";
 
 function name(lookup: NameLookup, id: string | undefined): string {
   if (id === undefined) return "an unnamed party";
@@ -93,7 +94,7 @@ export function RecommendationCard({
   }
 
   return (
-    <section className="fp-panel fp-rec-card" aria-live="polite">
+    <section className="fp-panel fp-rec-card" aria-live="polite" key={recommendation.id}>
       <div className="fp-rec-head">
         <h2 className="fp-panel-title">Recommendation</h2>
         <span className="fp-rec-confidence" data-confidence={confidence}>
@@ -121,62 +122,77 @@ export function RecommendationCard({
         </div>
       </dl>
 
-      {!rejecting ? (
-        <div className="fp-rec-actions">
-          <button
-            type="button"
-            className="fp-button fp-rec-approve"
-            disabled={busy}
-            onClick={() => onApprove(recommendation.id)}
-          >
-            {pendingAction === "approve" ? "Approving…" : "Approve"}
-          </button>
-          <button
-            type="button"
-            className="fp-button"
-            disabled={busy}
-            onClick={() => setRejecting(true)}
-          >
-            Reject
-          </button>
-        </div>
-      ) : (
-        <div className="fp-rec-reject-form">
-          <label className="fp-rec-reject-label" htmlFor="fp-rec-reject-reason">
-            Reason for rejecting
-          </label>
-          <textarea
-            id="fp-rec-reject-reason"
-            className="fp-rec-reject-input"
-            value={reasonDraft}
-            onChange={(event) => setReasonDraft(event.target.value)}
-            placeholder="Why doesn't this move make sense right now?"
-            rows={2}
-            disabled={busy}
-          />
-          <div className="fp-rec-actions">
-            <button
-              type="button"
-              className="fp-button fp-rec-reject-confirm"
-              disabled={busy || reasonDraft.trim().length === 0}
-              onClick={confirmReject}
-            >
-              {pendingAction === "reject" ? "Rejecting…" : "Confirm reject"}
-            </button>
-            <button
-              type="button"
-              className="fp-button"
+      <div className="fp-rec-actions">
+        <button
+          type="button"
+          className="fp-button fp-rec-approve"
+          data-variant="primary"
+          disabled={busy}
+          onClick={() => onApprove(recommendation.id)}
+        >
+          {pendingAction === "approve" ? <span className="fp-spinner" aria-hidden="true" /> : null}
+          {pendingAction === "approve" ? "Approving…" : "Approve"}
+        </button>
+        <button
+          type="button"
+          className="fp-button"
+          data-variant="secondary"
+          disabled={busy}
+          onClick={() => setRejecting(true)}
+        >
+          Reject
+        </button>
+      </div>
+
+      {rejecting ? (
+        <Modal
+          title="Reject this Recommendation"
+          onClose={() => {
+            setRejecting(false);
+            setReasonDraft("");
+          }}
+        >
+          <div className="fp-rec-reject-form">
+            <label className="fp-rec-reject-label" htmlFor="fp-rec-reject-reason">
+              Reason for rejecting
+            </label>
+            <textarea
+              id="fp-rec-reject-reason"
+              className="fp-rec-reject-input"
+              value={reasonDraft}
+              onChange={(event) => setReasonDraft(event.target.value)}
+              placeholder="Why doesn't this move make sense right now?"
+              rows={3}
               disabled={busy}
-              onClick={() => {
-                setRejecting(false);
-                setReasonDraft("");
-              }}
-            >
-              Cancel
-            </button>
+              autoFocus
+            />
+            <div className="fp-rec-actions">
+              <button
+                type="button"
+                className="fp-button fp-rec-reject-confirm"
+                data-variant="primary"
+                disabled={busy || reasonDraft.trim().length === 0}
+                onClick={confirmReject}
+              >
+                {pendingAction === "reject" ? <span className="fp-spinner" aria-hidden="true" /> : null}
+                {pendingAction === "reject" ? "Rejecting…" : "Confirm reject"}
+              </button>
+              <button
+                type="button"
+                className="fp-button"
+                data-variant="ghost"
+                disabled={busy}
+                onClick={() => {
+                  setRejecting(false);
+                  setReasonDraft("");
+                }}
+              >
+                Cancel
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        </Modal>
+      ) : null}
 
       {actionError !== null ? (
         <p className="fp-rec-error" role="alert">

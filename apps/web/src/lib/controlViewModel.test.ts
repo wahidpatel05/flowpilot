@@ -11,6 +11,7 @@ import type {
 import {
   buildControlViewModel,
   findControlNode,
+  pickFeaturedService,
   DEFAULT_FORECAST_HORIZON_MINUTES,
 } from "./controlViewModel";
 
@@ -229,6 +230,44 @@ describe("buildControlViewModel — facility totals", () => {
     });
     expect(vm.totals.averageWaitMinutes).toBeNull();
     expect(vm.totals.servicesStalled).toBe(1);
+  });
+});
+
+describe("buildControlViewModel — health breakdown", () => {
+  it("counts each Service into its current Health band", () => {
+    // Examination is critical (~36 min); Documents and Fees are healthy.
+    const vm = build();
+    expect(vm.healthBreakdown).toEqual({ healthy: 2, busy: 0, critical: 1 });
+  });
+
+  it("always sums to the number of Services", () => {
+    const vm = build();
+    const { healthy, busy, critical } = vm.healthBreakdown;
+    expect(healthy + busy + critical).toBe(vm.services.length);
+  });
+
+  it("counts a stalled (zero-Counter) Service as critical, not a fourth band", () => {
+    const vm = build({
+      counterAssignments: assignments.filter((a) => a.service_id !== FEES),
+      tokens: [...waiting(DOCS, 2), ...waiting(FEES, 4)],
+    });
+    expect(vm.healthBreakdown.critical).toBeGreaterThanOrEqual(1);
+    expect(vm.healthBreakdown.healthy + vm.healthBreakdown.busy + vm.healthBreakdown.critical).toBe(
+      vm.services.length,
+    );
+  });
+});
+
+describe("pickFeaturedService", () => {
+  it("picks the critical Service when one exists", () => {
+    const vm = build();
+    expect(pickFeaturedService(vm)?.serviceId).toBe(EXAM);
+  });
+
+  it("falls back to the longest line when nothing is critical", () => {
+    const vm = build({ tokens: [...waiting(DOCS, 1), ...waiting(FEES, 4)] }, 0);
+    expect(vm.criticalNow).toBeNull();
+    expect(pickFeaturedService(vm)?.serviceId).toBe(FEES);
   });
 });
 

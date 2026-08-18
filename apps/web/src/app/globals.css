@@ -1,16 +1,32 @@
+/* ------------------------------------------------------------------ *
+ * FlowPilot design tokens — bright, flat, friendly. Every page reads
+ * these variables, so retheming happens once, here.
+ * ------------------------------------------------------------------ */
 :root {
-  --fp-bg: #090b0d;
-  --fp-surface: #111417;
-  --fp-raised: #171b1f;
-  --fp-mint: #66f2b3;
-  --fp-cyan: #65c7ff;
-  --fp-amber: #ffb547;
-  --fp-coral: #ff626b;
-  --fp-text: #f5f7f8;
-  --fp-muted: #858d95;
+  --fp-bg: #fff7e6;
+  --fp-surface: #ffffff;
+  --fp-raised: #fffdf7;
+  --fp-border: #e6e6e6;
+
+  --fp-yellow: #ffd233;
+  --fp-pink: #ff4da6;
+  --fp-purple: #7b61ff;
+  --fp-green: #22c55e;
+
+  --fp-text: #111111;
+  --fp-muted: #6b7280;
+
+  /* Semantic aliases — every existing surface keeps working unchanged. */
+  --fp-mint: var(--fp-green); /* healthy */
+  --fp-amber: #f5a623; /* busy */
+  --fp-coral: #ef4444; /* critical */
+  --fp-cyan: var(--fp-purple); /* predicted / focus / highlight */
+
+  --fp-shadow-card: 0 1px 2px rgba(17, 17, 17, 0.04), 0 10px 24px rgba(17, 17, 17, 0.06);
+  --fp-shadow-raised: 0 4px 10px rgba(17, 17, 17, 0.08), 0 16px 32px rgba(17, 17, 17, 0.08);
 
   --fp-font-sans:
-    "Geist", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    "Inter", "Geist", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 * {
@@ -34,10 +50,234 @@ a {
   color: inherit;
 }
 
+/* ------------------------------------------------------------------ *
+ * Motion — the shared animation vocabulary from the moodboard.
+ * ------------------------------------------------------------------ */
+@keyframes fp-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fp-fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fp-slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fp-slide-out-right {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+}
+
+@keyframes fp-pop-bounce {
+  0% {
+    transform: scale(0.82);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.06);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes fp-highlight-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 210, 51, 0.45);
+  }
+  50% {
+    box-shadow: 0 0 0 7px rgba(255, 210, 51, 0);
+  }
+}
+
+@keyframes fp-step-in {
+  from {
+    opacity: 0;
+    transform: translateX(-12px) scale(0.88);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes fp-modal-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fp-modal-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes fp-avatar-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(123, 97, 255, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(123, 97, 255, 0);
+  }
+}
+
+@keyframes fp-avatar-alert-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);
+  }
+}
+
+@keyframes fp-avatar-bounce {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  30% {
+    transform: translateY(-4px) rotate(-4deg);
+  }
+  60% {
+    transform: translateY(0) rotate(3deg);
+  }
+}
+
+@keyframes fp-badge-spin {
+  from {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: rotate(180deg) scale(1.15);
+  }
+  to {
+    transform: rotate(360deg) scale(1);
+  }
+}
+
+@keyframes fp-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * Site nav — "Website Navigation Structure" (moodboard §3)
+ * ------------------------------------------------------------------ */
+.fp-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1.75rem;
+  background: var(--fp-surface);
+  border-bottom: 1px solid var(--fp-border);
+  position: sticky;
+  top: 0;
+  z-index: 60;
+}
+
+.fp-nav-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-weight: 800;
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  color: var(--fp-text);
+}
+
+.fp-nav-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: 0.6rem;
+  background: var(--fp-yellow);
+  color: var(--fp-text);
+  font-weight: 800;
+}
+
+.fp-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.fp-nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.85rem;
+  border-radius: 0.65rem;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--fp-muted);
+  text-decoration: none;
+  transition: background 160ms ease, color 160ms ease;
+}
+
+.fp-nav-link:hover {
+  color: var(--fp-text);
+  background: var(--fp-bg);
+}
+
+.fp-nav-link[aria-current="page"] {
+  color: var(--fp-text);
+  background: var(--fp-yellow);
+}
+
+/* ------------------------------------------------------------------ *
+ * Generic page shell shared by the root Live Queue page.
+ * ------------------------------------------------------------------ */
 .fp-page {
   max-width: 960px;
   margin: 0 auto;
   padding: 2.5rem 1.5rem 4rem;
+  animation: fp-fade-in-up 320ms ease both;
 }
 
 .fp-header {
@@ -51,7 +291,7 @@ a {
 
 .fp-title {
   font-size: 1.5rem;
-  font-weight: 600;
+  font-weight: 800;
   letter-spacing: -0.01em;
   margin: 0;
 }
@@ -67,10 +307,11 @@ a {
   align-items: center;
   gap: 0.5rem;
   font-size: 0.85rem;
+  font-weight: 600;
   padding: 0.35rem 0.75rem;
   border-radius: 999px;
   background: var(--fp-surface);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--fp-border);
   white-space: nowrap;
 }
 
@@ -82,8 +323,8 @@ a {
 }
 
 .fp-connection[data-phase="live"] .fp-connection-dot {
-  background: var(--fp-mint);
-  box-shadow: 0 0 0 3px rgba(102, 242, 179, 0.15);
+  background: var(--fp-green);
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.16);
 }
 
 .fp-connection[data-phase="connecting"] .fp-connection-dot,
@@ -92,12 +333,12 @@ a {
 }
 
 .fp-connection[data-phase="polling"] .fp-connection-dot {
-  background: var(--fp-cyan);
+  background: var(--fp-purple);
 }
 
 .fp-error {
-  border: 1px solid rgba(255, 98, 107, 0.4);
-  background: rgba(255, 98, 107, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.08);
   color: var(--fp-text);
   padding: 1rem 1.25rem;
   border-radius: 0.75rem;
@@ -113,12 +354,19 @@ a {
 
 .fp-card {
   background: var(--fp-surface);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 1rem;
+  border: 1px solid var(--fp-border);
+  border-radius: 1.1rem;
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 1.1rem;
+  box-shadow: var(--fp-shadow-card);
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.fp-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--fp-shadow-raised);
 }
 
 .fp-card-head {
@@ -130,7 +378,7 @@ a {
 
 .fp-service-name {
   font-size: 1.05rem;
-  font-weight: 600;
+  font-weight: 700;
   margin: 0;
 }
 
@@ -147,7 +395,7 @@ a {
   align-items: center;
   gap: 0.4rem;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   padding: 0.3rem 0.6rem;
@@ -155,18 +403,18 @@ a {
 }
 
 .fp-health[data-health="healthy"] {
-  color: var(--fp-mint);
-  background: rgba(102, 242, 179, 0.12);
+  color: var(--fp-green);
+  background: rgba(34, 197, 94, 0.12);
 }
 
 .fp-health[data-health="busy"] {
   color: var(--fp-amber);
-  background: rgba(255, 181, 71, 0.12);
+  background: rgba(245, 166, 35, 0.14);
 }
 
 .fp-health[data-health="critical"] {
   color: var(--fp-coral);
-  background: rgba(255, 98, 107, 0.14);
+  background: rgba(239, 68, 68, 0.12);
 }
 
 .fp-health-dot {
@@ -194,6 +442,7 @@ a {
   font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
+  font-weight: 700;
 }
 
 .fp-metric-value {
@@ -204,7 +453,7 @@ a {
 }
 
 .fp-metric-value[data-emphasis="wait"] {
-  color: var(--fp-cyan);
+  color: var(--fp-purple);
 }
 
 .fp-metric-unit {
@@ -239,7 +488,7 @@ a {
 
 .fp-desk-select {
   background: var(--fp-surface);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--fp-border);
   color: var(--fp-text);
   border-radius: 0.6rem;
   padding: 0.75rem 0.9rem;
@@ -264,7 +513,7 @@ a {
 
 .fp-desk-token-number {
   font-size: 2.5rem;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
 }
@@ -291,10 +540,14 @@ a {
   border: none;
   font-size: 1.1rem;
   font-weight: 700;
-  color: var(--fp-bg);
-  background: var(--fp-mint);
+  color: var(--fp-text);
+  background: var(--fp-green);
   cursor: pointer;
-  transition: opacity 0.15s ease;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+}
+
+.fp-desk-button:active:not(:disabled) {
+  transform: scale(0.98);
 }
 
 .fp-desk-button:disabled {
@@ -303,21 +556,23 @@ a {
 }
 
 .fp-desk-button-secondary {
-  background: var(--fp-cyan);
+  background: var(--fp-purple);
+  color: #ffffff;
   min-height: 3.25rem;
 }
 
 .fp-desk-button-danger {
   background: var(--fp-coral);
+  color: #ffffff;
 }
 
 .fp-desk-button-accent {
-  background: var(--fp-amber);
+  background: var(--fp-yellow);
 }
 
 .fp-desk-incoming {
-  border-color: rgba(255, 181, 71, 0.5);
-  background: rgba(255, 181, 71, 0.08);
+  border-color: rgba(245, 166, 35, 0.5);
+  background: rgba(245, 166, 35, 0.08);
 }
 
 .fp-desk-incoming-message {
@@ -330,28 +585,28 @@ a {
   border-radius: 0.75rem;
   font-size: 0.95rem;
   font-weight: 600;
+  animation: fp-fade-in-up 220ms ease both;
 }
 
 .fp-desk-feedback[data-type="success"] {
-  color: var(--fp-mint);
-  background: rgba(102, 242, 179, 0.12);
-  border: 1px solid rgba(102, 242, 179, 0.4);
+  color: #15803d;
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.4);
 }
 
 .fp-desk-feedback[data-type="error"] {
-  color: var(--fp-coral);
-  background: rgba(255, 98, 107, 0.1);
-  border: 1px solid rgba(255, 98, 107, 0.4);
+  color: #b91c1c;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.4);
 }
 
 /* ---------------------------------------------------------------------
- * Visitor PWA — softer companion theme (docs/adr/0004). Same mint identity
- * as Control, lighter surfaces and rounder shapes because this runs in a
- * stranger's hand on their own phone, not on an operator's desk.
+ * Visitor PWA — same bright identity, lighter and rounder because this
+ * runs in a stranger's hand on their own phone, not on an operator's desk.
  * --------------------------------------------------------------------- */
 .fp-visitor-page {
-  --fp-visitor-bg: #0d1210;
-  --fp-visitor-surface: #141b18;
+  --fp-visitor-bg: #fff7e6;
+  --fp-visitor-surface: #ffffff;
   max-width: 480px;
   margin: 0 auto;
   min-height: 100vh;
@@ -369,8 +624,8 @@ a {
 .fp-visitor-title {
   margin: 0;
   font-size: 1.4rem;
-  font-weight: 700;
-  color: var(--fp-mint);
+  font-weight: 800;
+  color: var(--fp-text);
   letter-spacing: -0.01em;
 }
 
@@ -397,17 +652,19 @@ a {
   gap: 0.75rem;
   padding: 1.1rem 1.25rem;
   border-radius: 1.25rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--fp-border);
   background: var(--fp-visitor-surface);
   color: var(--fp-text);
   font: inherit;
   text-align: left;
   cursor: pointer;
-  transition: border-color 0.15s ease, transform 0.15s ease;
+  box-shadow: var(--fp-shadow-card);
+  transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .fp-visitor-service-button:hover:not(:disabled) {
-  border-color: rgba(102, 242, 179, 0.4);
+  border-color: var(--fp-purple);
+  box-shadow: var(--fp-shadow-raised);
 }
 
 .fp-visitor-service-button:active:not(:disabled) {
@@ -420,7 +677,7 @@ a {
 }
 
 .fp-visitor-service-name {
-  font-weight: 600;
+  font-weight: 700;
   font-size: 1.02rem;
 }
 
@@ -439,7 +696,7 @@ a {
 
 .fp-visitor-card {
   background: var(--fp-visitor-surface);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--fp-border);
   border-radius: 1.5rem;
   padding: 2rem 1.5rem;
   display: flex;
@@ -447,6 +704,7 @@ a {
   align-items: center;
   gap: 1.25rem;
   text-align: center;
+  box-shadow: var(--fp-shadow-card);
 }
 
 .fp-visitor-card-head {
@@ -458,7 +716,7 @@ a {
 
 .fp-visitor-token-number {
   font-size: 1.1rem;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: 0.04em;
   font-variant-numeric: tabular-nums;
 }
@@ -475,7 +733,7 @@ a {
   line-height: 1;
   letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
-  color: var(--fp-mint);
+  color: var(--fp-green);
 }
 
 .fp-visitor-eta[data-health="busy"] .fp-visitor-eta-value {
@@ -513,6 +771,7 @@ a {
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--fp-muted);
+  font-weight: 700;
 }
 
 .fp-visitor-meta-value {
@@ -528,18 +787,33 @@ a {
 
 .fp-visitor-leave,
 .fp-visitor-button {
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--fp-border);
   border-radius: 999px;
   padding: 0.75rem 1.5rem;
   font: inherit;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  background: transparent;
+  background: var(--fp-surface);
   color: var(--fp-muted);
+  transition: border-color 160ms ease, color 160ms ease, transform 0.1s ease;
 }
 
 .fp-visitor-leave:hover,
 .fp-visitor-button:hover {
-  border-color: rgba(255, 255, 255, 0.3);
+  border-color: var(--fp-text);
   color: var(--fp-text);
+}
+
+.fp-visitor-leave:active,
+.fp-visitor-button:active {
+  transform: scale(0.98);
+}
+
+/* Respect a reduced-motion preference across the whole app. */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }
