@@ -994,7 +994,8 @@ begin
       'reason', v_reason,
       'action_type', v_rec.action_type,
       'message', v_msg,
-      'source', 'reject_recommendation')
+      'source', 'reject_recommendation'),
+    clock_timestamp()
   );
 
   return jsonb_build_object(
