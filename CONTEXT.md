@@ -72,6 +72,12 @@ A Service's pressure band — healthy, busy, or critical. Derived from predicted
 that Service's own thresholds.
 _Avoid_: status, severity, level, alert
 
+**Closed**:
+How Visitor surfaces read a Service with no active Assignment. It is not a fourth Health band —
+Health is still `critical`, because an unbounded wait is — but "Closed" is a thing a Visitor can
+act on where "Critical" and an infinite ETA are not. Visitor surfaces only; Control shows Health.
+_Avoid_: unavailable, offline, shut, inactive
+
 **Flow Graph**:
 The directed graph of Services showing what share of Visitors move from one to the next.
 It is what lets FlowPilot see a queue forming upstream before it arrives.

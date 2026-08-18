@@ -103,7 +103,7 @@ describe("buildServiceCatalogue", () => {
 
     const card = cards[0]!;
     expect(card.health).toBe("healthy");
-    expect(card.statusLabel).toBe("Healthy");
+    expect(card.healthLabel).toBe("Healthy");
   });
 
   it("escalates Health through busy to critical as the wait grows", () => {
@@ -113,7 +113,7 @@ describe("buildServiceCatalogue", () => {
       tokens: waitingTokens("svc-a", 5), // 20 min: over healthy, under critical
     })[0]!;
     expect(busy.health).toBe("busy");
-    expect(busy.statusLabel).toBe("Busy");
+    expect(busy.healthLabel).toBe("Busy");
 
     const critical = cataloguedFrom({
       services: [serviceRow({ id: "svc-a" })],
@@ -121,7 +121,7 @@ describe("buildServiceCatalogue", () => {
       tokens: waitingTokens("svc-a", 10), // 40 min: at or over critical
     })[0]!;
     expect(critical.health).toBe("critical");
-    expect(critical.statusLabel).toBe("Critical");
+    expect(critical.healthLabel).toBe("Critical");
   });
 
   it("says a Service is closed rather than showing an infinite wait", () => {
@@ -140,7 +140,7 @@ describe("buildServiceCatalogue", () => {
     // the more actionable word for a Visitor, and the design has an indicator
     // for exactly this. The canonical Health value is left untouched.
     expect(card.health).toBe("critical");
-    expect(card.statusLabel).toBe("Closed");
+    expect(card.healthLabel).toBe("Closed");
   });
 
   it("phrases the queue in people, and singularises one person", () => {

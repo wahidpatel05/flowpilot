@@ -7,7 +7,7 @@
  * the app an AsyncStorage dependency it would otherwise need only for auth.
  */
 import "react-native-url-polyfill/auto";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 /**
  * These two reads must stay literal `process.env.EXPO_PUBLIC_*` member
@@ -32,14 +32,27 @@ function required(name: string, value: string | undefined): string {
   return value;
 }
 
-export const supabase = createClient(
-  required("EXPO_PUBLIC_SUPABASE_URL", supabaseUrl),
-  required("EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY", supabasePublishableKey),
-  {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-      detectSessionInUrl: false,
-    },
-  },
-);
+let client: SupabaseClient | undefined;
+
+/**
+ * Built on first use, not at import time. A module-scope throw would take the
+ * whole app down with a red box before anything rendered; raising here lets the
+ * missing variable surface on the screen's existing error state, which can say
+ * what is wrong and offer a retry.
+ */
+export function getSupabaseClient(): SupabaseClient {
+  if (client === undefined) {
+    client = createClient(
+      required("EXPO_PUBLIC_SUPABASE_URL", supabaseUrl),
+      required("EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY", supabasePublishableKey),
+      {
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false,
+          detectSessionInUrl: false,
+        },
+      },
+    );
+  }
+  return client;
+}

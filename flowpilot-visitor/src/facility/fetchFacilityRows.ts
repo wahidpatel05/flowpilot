@@ -13,6 +13,11 @@
  * Node against the live project without dragging in React Native's polyfills.
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+  ACTIVE_ASSIGNMENT_STATUS,
+  MAX_RECENT_DURATION_SAMPLES,
+  QUEUEING_TOKEN_STATUSES,
+} from "@flowpilot/core";
 import type {
   CounterAssignmentRow,
   FacilityRows,
@@ -21,37 +26,57 @@ import type {
 } from "@flowpilot/core";
 
 /**
- * Tokens that have left do not affect queue length, but `completed` ones carry
- * the measured service durations the engine blends into its average, so they are
- * fetched and left for projectFacility to sort out.
+ * PostgREST applies its own row cap when a query names none, which would
+ * silently understate queue length. Stated explicitly, matching scripts/src/client.ts.
  */
-const QUEUE_RELEVANT_TOKEN_STATUSES = ["waiting", "called", "completed"];
+const MAX_ROWS = 5000;
+
+/**
+ * Completed Tokens are fetched only for the service durations the engine blends
+ * into its average, and it keeps just the newest MAX_RECENT_DURATION_SAMPLES per
+ * Service — so this asks for the most recent completions rather than every
+ * Token ever closed. Sized for several Services' worth of that window; the
+ * ordering is global, so a very busy Service can crowd out a quiet one's samples,
+ * which costs the quiet one nothing worse than its configured cold-start default.
+ */
+const COMPLETED_TOKEN_LIMIT = MAX_RECENT_DURATION_SAMPLES * 10;
+
+const TOKEN_COLUMNS =
+  "id, service_id, token_number, status, priority, joined_at, called_at, service_started_at, completed_at, is_simulated";
 
 export async function fetchFacilityRows(
   client: SupabaseClient,
 ): Promise<FacilityRows> {
-  const [services, counterAssignments, tokens] = await Promise.all([
+  const [services, counterAssignments, queueing, completed] = await Promise.all([
     client
       .from("services")
       .select(
         "id, name, slug, default_service_minutes, healthy_wait_threshold, critical_wait_threshold",
       )
-      .order("name"),
+      .order("name")
+      .limit(MAX_ROWS),
     client
       .from("counter_assignments")
       .select("id, counter_id, staff_id, service_id, assignment_type, status")
-      .eq("status", "active"),
+      .eq("status", ACTIVE_ASSIGNMENT_STATUS)
+      .limit(MAX_ROWS),
     client
       .from("tokens")
-      .select(
-        "id, service_id, token_number, status, priority, joined_at, called_at, service_started_at, completed_at, is_simulated",
-      )
-      .in("status", QUEUE_RELEVANT_TOKEN_STATUSES),
+      .select(TOKEN_COLUMNS)
+      .in("status", QUEUEING_TOKEN_STATUSES)
+      .limit(MAX_ROWS),
+    client
+      .from("tokens")
+      .select(TOKEN_COLUMNS)
+      .eq("status", "completed")
+      .order("completed_at", { ascending: false })
+      .limit(COMPLETED_TOKEN_LIMIT),
   ]);
 
   // Surface PostgREST's own message: it names the table and the policy, which is
   // the difference between a two-minute fix and an hour of guessing.
-  const failure = services.error ?? counterAssignments.error ?? tokens.error;
+  const failure =
+    services.error ?? counterAssignments.error ?? queueing.error ?? completed.error;
   if (failure) {
     throw new Error(`Could not read the facility: ${failure.message}`);
   }
@@ -59,6 +84,10 @@ export async function fetchFacilityRows(
   return {
     services: (services.data ?? []) as ServiceRow[],
     counterAssignments: (counterAssignments.data ?? []) as CounterAssignmentRow[],
-    tokens: (tokens.data ?? []) as TokenRow[],
+    // projectFacility sorts queueing from completed itself; it only needs both.
+    tokens: [
+      ...((queueing.data ?? []) as TokenRow[]),
+      ...((completed.data ?? []) as TokenRow[]),
+    ],
   };
 }

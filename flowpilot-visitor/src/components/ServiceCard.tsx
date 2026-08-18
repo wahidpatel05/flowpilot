@@ -2,13 +2,13 @@
  * One Service, as a Visitor deciding whether to join reads it.
  *
  * Follows the design's Service card: name, a meta line of queue and wait, and
- * the status indicator underneath. Read-only by design — joining a queue
+ * the Health indicator underneath. Read-only by design — joining a queue
  * arrives with A2, and a card that looked tappable and did nothing would be
  * worse than one that never invited the tap.
  */
 import { StyleSheet, Text, View } from "react-native";
 import type { ServiceCardModel } from "../facility/catalogue";
-import { StatusIndicator } from "./StatusIndicator";
+import { HealthIndicator } from "./HealthIndicator";
 import { MIN_TOUCH_TARGET, colors, radius, spacing } from "../theme";
 
 interface ServiceCardProps {
@@ -21,7 +21,7 @@ export function ServiceCard({ service }: ServiceCardProps) {
       style={styles.card}
       accessible
       accessibilityRole="summary"
-      accessibilityLabel={`${service.name}. ${service.metaLabel}. Status: ${service.statusLabel}.`}
+      accessibilityLabel={`${service.name}. ${service.metaLabel}. Health: ${service.healthLabel}.`}
     >
       <Text style={styles.name} numberOfLines={2}>
         {service.name}
@@ -29,9 +29,9 @@ export function ServiceCard({ service }: ServiceCardProps) {
       <Text style={[styles.meta, !service.isOpen && styles.metaClosed]}>
         {service.metaLabel}
       </Text>
-      <StatusIndicator
+      <HealthIndicator
         health={service.health}
-        statusLabel={service.statusLabel}
+        healthLabel={service.healthLabel}
         isOpen={service.isOpen}
       />
     </View>

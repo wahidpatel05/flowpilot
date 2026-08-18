@@ -21,11 +21,11 @@ export interface ServiceCardModel {
   /** Canonical Health from the engine. Never re-derived here. */
   health: QueueHealth;
   /**
-   * The status word on the badge, so Health never rides on colour alone.
+   * The Health word on the badge, so Health never rides on colour alone.
    * Tracks Health, except that a Service with no open Counter reads "Closed" —
    * true, actionable, and the indicator the design provides for it.
    */
-  statusLabel: string;
+  healthLabel: string;
   queueLength: number;
   queueLabel: string;
   /** Queue and wait on one line: "16 people · 31 min". */
@@ -45,7 +45,7 @@ const HEALTH_LABEL: Record<QueueHealth, string> = {
 };
 
 /** Shown instead of a Health word when the Service has no capacity at all. */
-export const CLOSED_STATUS_LABEL = "Closed";
+export const CLOSED_HEALTH_LABEL = "Closed";
 
 function queueLabelFor(queueLength: number): string {
   if (queueLength <= 0) return "No one waiting";
@@ -86,7 +86,7 @@ export function buildServiceCatalogue(
       serviceId: service.serviceId,
       name: service.serviceName ?? service.slug ?? "Service",
       health: snapshot.health,
-      statusLabel: isOpen ? HEALTH_LABEL[snapshot.health] : CLOSED_STATUS_LABEL,
+      healthLabel: isOpen ? HEALTH_LABEL[snapshot.health] : CLOSED_HEALTH_LABEL,
       queueLength: snapshot.queueLength,
       queueLabel,
       metaLabel: `${queueLabel} · ${waitLabel}`,

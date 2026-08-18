@@ -1,5 +1,6 @@
 /**
- * The design's status indicator: a coloured dot beside the status word.
+ * The design's status indicator, in FlowPilot's vocabulary: a coloured dot
+ * beside the Health word.
  *
  * The word is what makes this work — colour alone would leave a colour-blind
  * Visitor, or one in bright sunlight, unable to tell Busy from Critical.
@@ -8,16 +9,16 @@ import { StyleSheet, Text, View } from "react-native";
 import type { ServiceCardModel } from "../facility/catalogue";
 import { colors, healthColor, spacing } from "../theme";
 
-type StatusIndicatorProps = Pick<
+type HealthIndicatorProps = Pick<
   ServiceCardModel,
-  "health" | "statusLabel" | "isOpen"
+  "health" | "healthLabel" | "isOpen"
 >;
 
-export function StatusIndicator({
+export function HealthIndicator({
   health,
-  statusLabel,
+  healthLabel,
   isOpen,
-}: StatusIndicatorProps) {
+}: HealthIndicatorProps) {
   // A closed Service is grey rather than red: nothing is wrong with the queue,
   // there is simply nobody serving it.
   const tint = isOpen ? healthColor[health] : colors.grey;
@@ -25,7 +26,7 @@ export function StatusIndicator({
   return (
     <View style={styles.row}>
       <View style={[styles.dot, { backgroundColor: tint }]} />
-      <Text style={[styles.label, { color: tint }]}>{statusLabel}</Text>
+      <Text style={[styles.label, { color: tint }]}>{healthLabel}</Text>
     </View>
   );
 }

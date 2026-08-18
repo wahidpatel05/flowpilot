@@ -9,7 +9,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { projectFacility } from "@flowpilot/core";
 import { buildServiceCatalogue, type ServiceCardModel } from "./catalogue";
 import { fetchFacilityRows } from "./fetchFacilityRows";
-import { supabase } from "../supabase";
+import { getSupabaseClient } from "../supabase";
 
 export interface ServiceCatalogueState {
   services: ServiceCardModel[];
@@ -38,7 +38,7 @@ export function useServiceCatalogue(): ServiceCatalogueState {
   const load = useCallback(async (isRefresh: boolean) => {
     if (isRefresh) setIsRefreshing(true);
     try {
-      const rows = await fetchFacilityRows(supabase);
+      const rows = await fetchFacilityRows(getSupabaseClient());
       if (!isMountedRef.current) return;
       setServices(buildServiceCatalogue(projectFacility(rows)));
       setError(null);
