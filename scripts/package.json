@@ -1,0 +1,21 @@
+{
+  "name": "@flowpilot/scripts",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared operational scripts. The golden-path script drives the whole closed loop against the real Supabase project and proves a Visitor's ETA drops.",
+  "scripts": {
+    "golden-path": "tsx src/goldenPath.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.58.0",
+    "ws": "^8.21.3"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "@types/ws": "^8.18.1",
+    "tsx": "^4.20.0",
+    "typescript": "^5.6.3"
+  }
+}

@@ -87,6 +87,40 @@ Do not subscribe every client to every table. On hackathon wifi that is how you 
 `select reset_demo();` restores the live queue. `select simulate_rush();` injects the pressure.
 Rehearse with these, not by hand-inserting rows.
 
+> **`reset_demo()` needs `supabase/migrations/0003_reset_demo_api_safe.sql` applied.** As shipped it
+> raises `21000 DELETE requires a WHERE clause` when called through the API — it is `security
+> invoker`, so its unqualified `DELETE`/`UPDATE` statements run inside a `pg_safeupdate`-armed
+> Supabase session and are rejected. It only ever worked from the SQL editor, which means Control's
+> Reset Demo button would fail on stage. Paste `0003_reset_demo_api_safe.sql` (or the last section of
+> `BOOTSTRAP.sql`) into the SQL editor once. `simulate_rush()` is unaffected; it only inserts.
+
+## Golden path — proving the loop closes, and unblocking Android
+
+```bash
+cd scripts && npm install     # once
+npm run golden-path           # or from the repo root: npm --prefix scripts run golden-path
+```
+
+One command drives the entire closed loop against the live Supabase project with no UI involved:
+reset → a Visitor joins Examination Cell → capture their ETA → Simulate Rush → project facility
+state → `recommendIntervention()` → persist the Recommendation → `approve_recommendation()` →
+`accept_intervention()` → `apply_intervention()` → **assert the Visitor's recomputed ETA is strictly
+lower** → assert the timeline's causal chain → assert a second apply raises → reset. It prints a
+pass/fail line per assertion and a summary, exits non-zero on failure, and leaves the database at the
+seeded baseline even if it fails.
+
+It reads `.env.local` at the repo root (the publishable key — no service-role key anywhere) and it
+never reimplements the engine: rows become domain state through `projectFacility`, and every ETA
+comes from `projectTokenEta`.
+
+**Android team: this is your unblocker.** Your signature moment is the ETA dropping on the phone,
+which requires a real Intervention to be applied. Run this script on demand and it fires one — no
+Control, no web UI, no manager clicking anything. Join the same queue on the phone first, keep the
+token screen open, then run the script: `counter_assignments` gains a row for Examination Cell, your
+subscription fires, and the ETA roughly halves (about 37 min → 18 min on the seeded data). The script
+prints its own Visitor's Token number and both ETAs so you can compare against what the phone shows.
+Runs are repeatable; the script's own Token numbers start `E-GP` so its artefacts are obvious.
+
 ## Environment variables — copy these names exactly
 
 This project uses Supabase's **new** key format. The variable is `*_PUBLISHABLE_KEY`, **not**
